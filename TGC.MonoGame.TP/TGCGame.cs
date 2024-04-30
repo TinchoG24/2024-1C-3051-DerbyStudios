@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,7 +24,7 @@ namespace TGC.MonoGame.TP
         public const string ContentFolderTextures = "Textures/";
         public const float ViewDistance = 20f;
         public const float Offset = 10f;
-
+        private const int SEED = 0;
         public const float CameraSpeed = 50f;
         public Vector3 LookAtVector = new Vector3(0, 0, Offset);
 
@@ -33,10 +35,10 @@ namespace TGC.MonoGame.TP
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
-            
+
             Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
-            
+
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
             Content.RootDirectory = "Content";
@@ -44,9 +46,26 @@ namespace TGC.MonoGame.TP
             IsMouseVisible = true;
         }
 
-        private GraphicsDeviceManager Graphics { get; }
+        private GraphicsDeviceManager Graphics { get; set; }
+        private Random _random;
         private SpriteBatch SpriteBatch { get; set; }
         private Model Model { get; set; }
+        private Model Tree1 { get; set; }
+        public Model Box1 { get; private set; }
+        private Model Weapon1 { get; set; }
+        private Model Vehicle { get; set; }
+        private Model Gasoline { get; set; }
+        private Model Ramp { get; set; }
+        private Model CarDBZ { get; set; }
+        private Model Car2 { get; set; }
+        private Model Tower { get; set; }
+        private Model Bush1 { get; set; }
+        public Model Truck { get; private set; }
+        public Model Fence1 { get; private set; }
+        public Model Fence2 { get; private set; }
+        public Model SceneCars { get; private set; }
+        private Edificio Cottage { get; set; }
+        private Edificio School { get; set; }
         private CubePrimitive Box { get; set; }
         private Effect Effect { get; set; }
         private float Rotation { get; set; }
@@ -56,6 +75,8 @@ namespace TGC.MonoGame.TP
         private float XMovementPosition { get; set; }
         private float ZMovementPosition { get; set; }
 
+        private List<Model> Models3d = new List<Model>();
+
 
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
@@ -64,6 +85,8 @@ namespace TGC.MonoGame.TP
         protected override void Initialize()
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
+
+
 
             // Apago el backface culling.
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
@@ -81,7 +104,7 @@ namespace TGC.MonoGame.TP
             World = Matrix.Identity;
             View = Matrix.CreateLookAt(new Vector3(-ViewDistance + XMovementPosition, ViewDistance, -ViewDistance + Offset + ZMovementPosition), LookAtVector, Vector3.Up);
             Projection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 1000);
 
             base.Initialize();
         }
@@ -96,16 +119,67 @@ namespace TGC.MonoGame.TP
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // Cargo el modelo del logo.
-            Model = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
-
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
+            // Cargo el modelo del logo.
+            Model = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
+            Tree1 = Content.Load<Model>(ContentFolder3D + "trees/Tree2");
+            Box1 = Content.Load<Model>(ContentFolder3D + "Street/model/Electronic box");
+            Tower = Content.Load<Model>(ContentFolder3D + "Street/model/towers");
+            Weapon1 = Content.Load<Model>(ContentFolder3D + "weapons/Weapons");
+            Vehicle = Content.Load<Model>(ContentFolder3D + "weapons/Vehicle");
+            Ramp = Content.Load<Model>(ContentFolder3D + "ramp/ramp");
+            Gasoline = Content.Load<Model>(ContentFolder3D + "gasoline/gasoline");
+            CarDBZ = Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZ");
+            Car2 = Content.Load<Model>(ContentFolder3D + "car2/car2");
+            Ramp = Content.Load<Model>(ContentFolder3D + "Street/model/ramp");
+            Bush1 = Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1");
+            Truck = Content.Load<Model>(ContentFolder3D + "Truck/source/KAMAZ");
+            Fence1 = Content.Load<Model>(ContentFolder3D + "Street/model/fence");
+            Fence2 = Content.Load<Model>(ContentFolder3D + "Street/model/fence2");
+            SceneCars = Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene");
+
+
+            Cottage = new Edificio(new Vector3(-20, 0, -20));
+            var cottageModel = Content.Load<Model>(ContentFolder3D + "Street/model/House");
+            Cottage.Load(cottageModel, Effect);
+
+            School = new Edificio(new Vector3(20, 0, 20));
+            var schoolModel = Content.Load<Model>(ContentFolder3D + "Street/model/House");
+            School.Load(schoolModel, Effect);
+
             // Asigno el efecto que cargue a cada parte del mesh.
             // Un modelo puede tener mas de 1 mesh internamente.
-            foreach (var mesh in Model.Meshes)
+            LoadEffect(Model);
+            LoadEffect(Tree1);
+            LoadEffect(Box1);
+            LoadEffect(Weapon1);
+            LoadEffect(Vehicle);
+            LoadEffect(Ramp);
+            LoadEffect(Gasoline);
+            LoadEffect(CarDBZ);
+            LoadEffect(Car2);
+            LoadEffect(Tower);
+            LoadEffect(Ramp);
+            LoadEffect(Bush1);
+            LoadEffect(Truck);
+            LoadEffect(Fence1);
+            LoadEffect(Fence2);
+            LoadEffect(SceneCars);
+
+            Models3d.Add(Truck);
+            Models3d.Add(Fence1);
+            Models3d.Add(Fence2);
+            Models3d.Add(SceneCars);
+
+            base.LoadContent();
+        }
+
+        private void LoadEffect(Model model)
+        {
+            foreach (var mesh in model.Meshes)
             {
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
@@ -113,8 +187,6 @@ namespace TGC.MonoGame.TP
                     meshPart.Effect = Effect;
                 }
             }
-
-            base.LoadContent();
         }
 
         /// <summary>
@@ -181,15 +253,47 @@ namespace TGC.MonoGame.TP
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             Effect.Parameters["View"].SetValue(View);
             Effect.Parameters["Projection"].SetValue(Projection);
-            Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
-                Matrix[] transforms = new Matrix[Model.Bones.Count];
-                for(int i = 0; i < Model.Bones.Count; i++)
-                {
-                    transforms[i] = Model.Bones[i].ModelTransform;
-                }
+
+            _random = new Random(SEED);
 
             DrawFloor(Box);
+            DrawCar();
+            DrawTrees();
+            DrawBox();
+            DrawWeapon1();
+            DrawVehicle();
+            DrawTowers();
+            DrawRamps();
+            DrawBushes();
+            Cottage.Draw();
+            School.Draw();
+            DrawRamp();
+            DrawGasoline();
+            DrawCarDBZ();
+            DrawModels(Models3d);
+        }
 
+        private void DrawModels(List<Model> models)
+        {
+            foreach (Model model in models)
+            {
+                for (int i = 0; i < 15; i++)
+                {
+                    Vector3 modelTraslation =  new Vector3(_random.Next(-200, 200), 0, _random.Next(-450, 450));
+                    foreach (var mesh in model.Meshes)
+                    {
+                        Effect.Parameters["DiffuseColor"].SetValue(Color.Yellow.ToVector3());
+                        Effect.Parameters["World"].SetValue(mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(modelTraslation));
+                        mesh.Draw();
+                    }
+                }
+            }
+
+
+        }
+
+        private void DrawCar()
+        {
             foreach (var mesh in Model.Meshes)
             {
                 Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
@@ -197,11 +301,142 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
         }
+        private void DrawCarDBZ()
+        {
+            foreach (var mesh in CarDBZ.Meshes)
+            {
+                Effect.Parameters["DiffuseColor"].SetValue(Color.BlueViolet.ToVector3());
+                Effect.Parameters["World"].SetValue(mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(new Vector3(40, 0, 40)));
+                mesh.Draw();
+            }
+        }
+
+        private void DrawBox()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                Vector3 boxTraslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Box1.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.DarkGreen.ToVector3());
+                    Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(1, 1, 1)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(boxTraslation));
+                    mesh.Draw();
+                }
+            }
+        }
+
+        private void DrawTowers()
+        {
+            for (int i = 0; i < 15; i++)
+            {
+                Vector3 towerTraslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Tower.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Yellow.ToVector3());
+                    Effect.Parameters["World"].SetValue(mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(towerTraslation));
+                    mesh.Draw();
+                }
+            }
+        }
+        private void DrawRamps()
+        {
+            for (int i = 0; i < 15; i++)
+            {
+                Vector3 rampTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                var randomRotation = Convert.ToSingle(_random.NextDouble() * 2.0 * Math.PI);
+                foreach (var mesh in Ramp.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Pink.ToVector3());
+                    Effect.Parameters["World"].SetValue(mesh.ParentBone.ModelTransform * Matrix.CreateScale(4f) * Matrix.CreateRotationY(randomRotation) * Matrix.CreateTranslation(rampTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
+        private void DrawBushes()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                Vector3 rampTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Bush1.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Pink.ToVector3());
+                    Effect.Parameters["World"].SetValue(mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(rampTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
+
+        private void DrawTrees()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                Vector3 treeTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Tree1.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
+                    Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(60, 60, 60)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(treeTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
+
+        private void DrawWeapon1()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Vector3 armaTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Weapon1.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Gray.ToVector3());
+                    Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(0.1f, 0.1f, 0.1f)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(armaTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
+
+        private void DrawVehicle()
+        {
+
+            Vector3 vehicleTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+
+            foreach (var mesh in Vehicle.Meshes)
+            {
+                Effect.Parameters["DiffuseColor"].SetValue(Color.DarkCyan.ToVector3());
+                Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(0.03f, 0.03f, 0.03f)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(vehicleTranslation));
+                mesh.Draw();
+            }
+        }
+        private void DrawRamp()
+        {
+            for (int i = 0; i < 25; i++)
+            {
+                Vector3 rampTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Ramp.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Black.ToVector3());
+                    Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(2f, 2f, 2f)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(rampTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
+        private void DrawGasoline()
+        {
+            for (int i = 0; i < 15; i++)
+            {
+                Vector3 gasolineTranslation = new Vector3(_random.Next(-450, 450), 0, _random.Next(-450, 450));
+                foreach (var mesh in Gasoline.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.Brown.ToVector3());
+                    Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(1.5f, 1.5f, 1.5f)) * mesh.ParentBone.ModelTransform * Matrix.CreateTranslation(gasolineTranslation));
+                    mesh.Draw();
+                }
+            }
+        }
 
         private void DrawFloor(GeometricPrimitive geometry)
         {
             Effect.Parameters["DiffuseColor"].SetValue(Color.DarkSeaGreen.ToVector3());
-            Effect.Parameters["World"].SetValue(Matrix.CreateTranslation(new Vector3(0, -1, 0)) * Matrix.CreateScale(new Vector3(1000, 2, 1000)));
+            Effect.Parameters["World"].SetValue(Matrix.CreateScale(new Vector3(1000, 2, 1000)) * Matrix.CreateTranslation(new Vector3(0, -1, 0)));
             geometry.Draw(Effect);
         }
 
