@@ -261,17 +261,16 @@ namespace TGC.MonoGame.TP
             Effect.Parameters["KSpecular"].SetValue(0.25f);
             Effect.Parameters["shininess"].SetValue(10.0f);
 
-            // TilingEffect.Parameters["ambientColor"].SetValue(new Vector3(0.7f, 0.7f, 0.5f));
-            // TilingEffect.Parameters["diffuseColor"].SetValue(new Vector3(0.7f, 0.8f, 0.6f));
-            // TilingEffect.Parameters["specularColor"].SetValue(new Vector3(1f, 1f, 1f));
-            // TilingEffect.Parameters["KAmbient"].SetValue(0.2f);
-            // TilingEffect.Parameters["KDiffuse"].SetValue(0.4f);
-            // TilingEffect.Parameters["KSpecular"].SetValue(0.6f);
-            // TilingEffect.Parameters["shininess"].SetValue(0.5f);
-            // TilingEffect.Parameters["lightPosition"]?.SetValue(new Vector3(150f, 40f, 100f));
+            TilingEffect.Parameters["ambientColor"].SetValue(new Vector3(0.9f, 0.9f, 0.8f));
+            TilingEffect.Parameters["diffuseColor"].SetValue(new Vector3(0.9f, 0.9f, 0.8f));
+            TilingEffect.Parameters["specularColor"].SetValue(new Vector3(1f, 1f, 1f));
+            TilingEffect.Parameters["KAmbient"].SetValue(0.5f);
+            TilingEffect.Parameters["KDiffuse"].SetValue(0.5f);
+            TilingEffect.Parameters["KSpecular"].SetValue(0f);
+            TilingEffect.Parameters["shininess"].SetValue(0.01f);
 
             FloorTexture = Content.Load<Texture2D>(ContentFolderTextures + "FloorTexture");
-            // FloorNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "FloorNormalMap");
+            FloorNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "FloorNormalMap");
             WallTexture = Content.Load<Texture2D>(ContentFolderTextures + "stoneTexture");
             WallNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "WallNormalMap");
 
@@ -435,6 +434,10 @@ namespace TGC.MonoGame.TP
 
             Effect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
 
+            var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), MainCar.Pose.Orientation);
+            TilingEffect.Parameters["forwardDir"].SetValue(forwardDirection);
+            TilingEffect.Parameters["lightPosition"].SetValue(MainCar.Position + 3 * forwardDirection + new Vector3(0, 10f, 0));
+
             SpheresWorld.Clear();
             var quaternionCar = MainCar.quaternion;
 
@@ -480,7 +483,7 @@ namespace TGC.MonoGame.TP
 
             });
 
-            Enemy.Update(MainCar, gameTime, Simulation);
+            // Enemy.Update(MainCar, gameTime, Simulation);
 
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
@@ -580,42 +583,42 @@ namespace TGC.MonoGame.TP
         private void DrawFloor(QuadPrimitive geometry)
         {
             // EffectNoTextures.Parameters["DiffuseColor"].SetValue(Color.DarkSeaGreen.ToVector3());
-            TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTiling"];
+            TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTilingWithLights"];
             var world = FloorWorld * Matrix.CreateTranslation(0f, -0.1f, 0f);
-            // var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+            var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
             TilingEffect.Parameters["World"].SetValue(world);
             TilingEffect.Parameters["WorldViewProjection"].SetValue(world * FollowCamera.View * FollowCamera.Projection);
             TilingEffect.Parameters["Tiling"].SetValue(new Vector2(350f, 350f));
             TilingEffect.Parameters["Texture"].SetValue(FloorTexture);
-            // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Identity);
-            // TilingEffect.Parameters["NormalMap"].SetValue(FloorNormalMap);
+            TilingEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Identity);
+            TilingEffect.Parameters["NormalMap"].SetValue(FloorNormalMap);
             geometry.Draw(TilingEffect);
 
         }
         
         private void DrawWalls()
         {
-            TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTiling"];
+            TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTilingWithLights"];
             var prim = new QuadPrimitive(GraphicsDevice);
             foreach (var wall in WallWorlds)
             {
                 var quadCorrection1 = Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * Matrix.CreateScale(1f, 10f, 200f);
                 var quadCorrection2 = Matrix.CreateRotationZ(MathHelper.ToRadians(90)) * Matrix.CreateScale(1f, 10f, 200f);
                 var world = quadCorrection1 * wall;
-                // var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+                var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
                 TilingEffect.Parameters["World"].SetValue(world);
                 TilingEffect.Parameters["Tiling"].SetValue(new Vector2(3f, 30f));
                 TilingEffect.Parameters["Texture"].SetValue(WallTexture);
-                // TilingEffect.Parameters["NormalMap"].SetValue(WallNormalMap);
-                // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
+                TilingEffect.Parameters["NormalMap"].SetValue(WallNormalMap);
+                TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
                 TilingEffect.Parameters["WorldViewProjection"].SetValue(
                     world * FollowCamera.View * FollowCamera.Projection
                     );
                 prim.Draw(TilingEffect);
                 world = quadCorrection2 * wall;
-                // inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+                inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
                 TilingEffect.Parameters["World"].SetValue(world);
-                // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
+                TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
                 TilingEffect.Parameters["WorldViewProjection"].SetValue(
                     world * FollowCamera.View * FollowCamera.Projection
                     );
