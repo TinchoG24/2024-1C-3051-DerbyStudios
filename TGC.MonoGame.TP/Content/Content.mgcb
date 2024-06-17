@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/BasicShaderNoTextures.fx
 
+#begin Effects/BasicShaderTexture.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/BasicShaderTexture.fx
+
 #begin Effects/EnvironmentMap.fx
 /importer:EffectImporter
 /processor:EffectProcessor

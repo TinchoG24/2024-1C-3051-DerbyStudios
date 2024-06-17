@@ -23,7 +23,7 @@ namespace TGC.MonoGame.TP
         public BoundingBox BoundingBox { get; set; }
         public bool Touch { get; set; }
 
-        public List<List<Texture2D>> MeshPartTextures = new List<List<Texture2D>>();
+        public List<Texture2D> ModelTextures = new List<Texture2D>();
 
         
 

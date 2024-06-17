@@ -63,13 +63,12 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 {
 	VertexShaderOutput output = (VertexShaderOutput)0;
 
-
     float4 worldPosition = mul(input.Position, World);
-	output.WorldPosition = worldPosition;
 
     float4 viewPosition = mul(worldPosition, View);	
 	
     output.Position = mul(viewPosition, Projection);
+	output.WorldPosition = worldPosition;
 	output.TextureCoordinate = input.TextureCoordinate;
 	output.Color = input.Color;
 	output.Normal = mul(input.Normal, InverseTransposeWorld);

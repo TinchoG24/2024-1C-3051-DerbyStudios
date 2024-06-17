@@ -123,6 +123,7 @@ namespace TGC.MonoGame.TP
 
         //Efectos 
         private Effect Effect { get; set; }
+        private Effect EffectTexture { get; set; }
         private Effect EffectNoTextures { get; set; }
         private Effect TilingEffect { get; set; }
         private Effect EnvironmentMapEffect {get; set; }
@@ -259,6 +260,7 @@ namespace TGC.MonoGame.TP
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
+            EffectTexture = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             EffectNoTextures = Content.Load<Effect>(ContentFolderEffects + "BasicShaderNoTextures");
             TilingEffect = Content.Load<Effect>(ContentFolderEffects + "TextureTiling");
@@ -303,12 +305,12 @@ namespace TGC.MonoGame.TP
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
-            
+
             //Load Models posicion variable
-            //Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 10, GameModelList ,10f);
-            //Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation , 15 , GameModelList);
-            //Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation , 15 , GameModelList);
-            //Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation , 30 , GameModelList);
+            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 10, GameModelList, 10f);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation, 15, GameModelList);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 15, GameModelList);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation, 30, GameModelList);
 
             //Array de todos los modelos
             GameModels = GameModelList.ToArray();
