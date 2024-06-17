@@ -23,6 +23,16 @@ using TGC.MonoTP;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 using TGC.MonoGame.Samples.Collisions;
+using static System.Formats.Asn1.AsnWriter;
+using System.Runtime.ConstrainedExecution;
+using TGC.MonoGame.TP.Entities;
+using TGC.MonoGame.TP.Camaras;
+using TGC.MonoGame.Samples.Cameras;
+using System.Transactions;
+using System.Security.Claims;
+using System.Reflection.Metadata.Ecma335;
+using BepuPhysics.Trees;
+using System.Reflection.Metadata;
 
 namespace TGC.MonoGame.TP
 {
@@ -70,27 +80,46 @@ namespace TGC.MonoGame.TP
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
         }
+        
         public Gizmos Gizmos { get; set; }
-
         private GraphicsDeviceManager Graphics { get; set; }
-        private Random _random;
-        public SpriteFont SpriteFont;
+       
+        //Random 
+        private Random _random {  get; set; }
 
+        //Frustum Optimizacion
+        private BoundingFrustum BoundingFrustum { get; set; }
+
+        //Camara
         private FollowCamera FollowCamera { get; set; }
+
+        //Sprites
+        public SpriteFont SpriteFont {  get; set; } 
         private SpriteBatch SpriteBatch { get; set; }
+
+
+        //Piso y paredes  Limites
         private Texture2D FloorTexture { get; set; }
+        private Texture2D FloorNormalMap { get; set; }
         private Texture2D WallTexture { get; set; }
+        private Texture2D WallNormalMap { get; set; }
+        private QuadPrimitive FloorQuad { get; set; }
+        private Matrix FloorWorld { get; set; }
+        
+        private List<Matrix> WallWorlds = new List<Matrix>();
+
 
         //Auto Principal 
         private CarConvexHull MainCar { get; set; }
         private CarSimulation CarSimulation { get; set; }
         private Simulation Simulation { get; set; }
+        public Matrix CarBoxPosition { get; private set; }
+        public Model CarModel { get; private set; }
+        public Matrix CarOBBWorld { get; private set; }
+        public OrientedBoundingBox CarBox { get; private set; }
 
-        //Piso y paredes 
-        private QuadPrimitive FloorQuad { get; set; }
-        private Matrix FloorWorld { get; set; }
 
-        private List<Matrix> WallWorlds = new List<Matrix>();
+        
 
         //Efectos 
         private Effect Effect { get; set; }
@@ -101,6 +130,7 @@ namespace TGC.MonoGame.TP
         //Modelos y PowerUps
         private PowerUp[] PowerUps { get; set; }
         private GameModel[] GameModels { get; set; }
+        private List<GameModel> GameModelList { get; set; }
 
         //SoundEffects 
         private SoundEffect MachineGunSound { get; set; }
@@ -108,80 +138,26 @@ namespace TGC.MonoGame.TP
         private SoundEffect Claxon { get; set; }
         private SoundEffect Explosion { get; set; }
 
-
         //Misiles
-        private Random Random { get; set; }
         private SpherePrimitive Sphere { get; set; }
         private List<float> Radii { get; set; }
         private List<BodyHandle> SphereHandles { get; set; }
         private List<Missile> Missiles { get; set; }
         private List<Matrix> SpheresWorld { get; set; }
         private bool CanShoot { get; set; }
-        private GameModel MissileModel { get; set; }
-        public GameModel Bullet { get; private set; }
+        private Model MissileModel { get; set; }
+        public Model Bullet { get; private set; }
 
-        private List<bool> firstTime = new List<bool>();
-        private List<Quaternion> missileOrientation = new List<Quaternion>();
+        //Enemy
+        private Enemy Enemy { get; set; }
 
         //HUD 
         HUD HUD { get; set; }
         public Song backgroundMusic { get; private set; }
         public SoundEffect soundEffect { get; private set; }
-        public Model CarModel { get; private set; }
 
-        private int ArenaWidth = 200;
-        private int ArenaHeight = 200;
-        private float time;
+        private float time = 0;
 
-        public List<Vector3> GenerateRandomPositions(int count)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, 0, z));
-            }
-
-            return positions;
-        }
-        public List<Vector3> GenerateRandomPositions(int count , float y)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, y, z));
-            }
-
-            return positions;
-        }
-
-        private NumericVector3[] GetVerticesFromModel(Model model)
-        {
-            List<NumericVector3> vertices = new List<NumericVector3>();
-
-            foreach (ModelMesh mesh in model.Meshes)
-            {
-                foreach (ModelMeshPart part in mesh.MeshParts)
-                {
-                    VertexBuffer vertexBuffer = part.VertexBuffer;
-                    int vertexStride = part.VertexBuffer.VertexDeclaration.VertexStride;
-                    int vertexBufferSize = vertexBuffer.VertexCount * vertexStride;
-
-                    // Get the vertices from the vertex buffer
-                    NumericVector3[] vertexData = new NumericVector3[vertexBuffer.VertexCount];
-                    vertexBuffer.GetData(vertexData);
-                    
-                    // Add the vertices to the list
-                    vertices.AddRange(vertexData);
-                }
-            }
-            return vertices.ToArray();
-        }
 
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
@@ -189,9 +165,15 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Initialize()
         {
-            // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
+            Vector3 scale;
+            Quaternion rot;
+            Vector3 translation;
+
+            //HUD
             HUD = new HUD(Content, GraphicsDevice);
             HUD.Initialize();
+
+            //Random SEED = 0
             _random = new Random(SEED);
 
             // Apago el backface culling.
@@ -201,34 +183,49 @@ namespace TGC.MonoGame.TP
             // rasterizerState.CullMode = CullMode.None;
             // GraphicsDevice.RasterizerState = rasterizerState;
 
-            // Creo una camara para seguir a nuestro auto.
+            // Camara para seguir al auto principal
             FollowCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+            BoundingFrustum = new BoundingFrustum(FollowCamera.View * FollowCamera.Projection);
 
             //  Simulacion del auto principal 
+            CarModel = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
             CarSimulation = new CarSimulation();
             Simulation = CarSimulation.Init();
             MainCar = new CarConvexHull(Vector3.Zero, Gravity, Simulation);
 
+            // OBB del auto principal
+            var temporaryCubeAABB = BoundingVolumesExtensions.CreateAABBFrom(CarModel);
+            temporaryCubeAABB = BoundingVolumesExtensions.Scale(temporaryCubeAABB, 0.017f);
+            CarBox = OrientedBoundingBox.FromAABB(temporaryCubeAABB);
+            CarBox.Center = Vector3.Zero;
+            MainCar.World.Decompose(out scale, out rot, out translation);
+            CarBox.Orientation = Matrix.CreateFromQuaternion(rot);
+            CarBoxPosition = Matrix.CreateTranslation(translation);
 
+            //Piso
             FloorQuad = new QuadPrimitive(GraphicsDevice);
             FloorWorld = Matrix.CreateScale(2500f, 1f, 2500f);
 
             // PowerUps
             PowerUps = new PowerUp[]
             {
-                new VelocityPowerUp(),
-                new MissilePowerUp(),
-                new MachineGunPowerUp()
+                new VelocityPowerUp(new Vector3(-20,2,-20)),
+                new MissilePowerUp(new Vector3(20,2,-20)),
+                new MachineGunPowerUp(new Vector3(-20,2,20))
             };
-
+            //Bullets y Misiles 
             SpheresWorld = new List<Matrix>();
             Missiles = new List<Missile>();
             Radii = new List<float>();
             SphereHandles = new List<BodyHandle>();
             Sphere = new SpherePrimitive(GraphicsDevice);
 
+            //Enemies
+            Enemy = new Enemy(new Vector3(-50, 0, 50));
+
             base.Initialize();
         }
+
 
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
@@ -236,8 +233,6 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
-            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-
             HUD.LoadContent();
             backgroundMusic = Content.Load<Song>(ContentFolder3D + "HUD/SoundTrack");
             soundEffect = Content.Load<SoundEffect>(ContentFolder3D + "HUD/SoundEffect");
@@ -249,6 +244,7 @@ namespace TGC.MonoGame.TP
             Gizmos.LoadContent(GraphicsDevice, Content);
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
+            //Load PowersUps
             Array.ForEach(PowerUps, powerUp => powerUp.LoadContent(Content));
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -256,43 +252,69 @@ namespace TGC.MonoGame.TP
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             EffectNoTextures = Content.Load<Effect>(ContentFolderEffects + "BasicShaderNoTextures");
             TilingEffect = Content.Load<Effect>(ContentFolderEffects + "TextureTiling");
-            FloorTexture = Content.Load<Texture2D>(ContentFolderTextures + "FloorTexture");
-            WallTexture = Content.Load<Texture2D>(ContentFolderTextures + "stoneTexture");
-            NumericVector3 center;
 
-            CarModel = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
-            var RampModel = Content.Load < Model >(ContentFolder3D + "ramp/RampNew");
-            var rampVertices = GetVerticesFromModel(RampModel);
+            Effect.Parameters["ambientColor"].SetValue(new Vector3(0.7f, 0.7f, 0.5f));
+            Effect.Parameters["diffuseColor"].SetValue(new Vector3(0.4f, 0.5f, 0.6f));
+            Effect.Parameters["specularColor"].SetValue(new Vector3(1f, 1f, 1f));
+            Effect.Parameters["KAmbient"].SetValue(1.5f);
+            Effect.Parameters["KDiffuse"].SetValue(1.3f);
+            Effect.Parameters["KSpecular"].SetValue(0.25f);
+            Effect.Parameters["shininess"].SetValue(10.0f);
+
+            // TilingEffect.Parameters["ambientColor"].SetValue(new Vector3(0.7f, 0.7f, 0.5f));
+            // TilingEffect.Parameters["diffuseColor"].SetValue(new Vector3(0.7f, 0.8f, 0.6f));
+            // TilingEffect.Parameters["specularColor"].SetValue(new Vector3(1f, 1f, 1f));
+            // TilingEffect.Parameters["KAmbient"].SetValue(0.2f);
+            // TilingEffect.Parameters["KDiffuse"].SetValue(0.4f);
+            // TilingEffect.Parameters["KSpecular"].SetValue(0.6f);
+            // TilingEffect.Parameters["shininess"].SetValue(0.5f);
+            // TilingEffect.Parameters["lightPosition"]?.SetValue(new Vector3(150f, 40f, 100f));
+
+            FloorTexture = Content.Load<Texture2D>(ContentFolderTextures + "FloorTexture");
+            // FloorNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "FloorNormalMap");
+            WallTexture = Content.Load<Texture2D>(ContentFolderTextures + "stoneTexture");
+            WallNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "WallNormalMap");
+
             MainCar.Load(CarModel, Effect);
 
-            GameModels = new GameModel[]
-             {
-                new GameModel(Content.Load<Model>(ContentFolder3D + "trees/Tree4"), Effect, 1f, GenerateRandomPositions(100), Simulation, new Sphere(1.5f)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 1f, GenerateRandomPositions(100), Simulation, new Box(3f, 3f, 2f)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Street/model/old_water_tower"), Effect, 1f, GenerateRandomPositions(15,10f), Simulation, new Box(10f, 20f, 10f)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "weapons/Weapons"), Effect, 0.1f, GenerateRandomPositions(20), Simulation, new Box(2.5f, 2f, 2.5f)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "gasoline/gasoline"), Effect, 1.5f, GenerateRandomPositions(100), Simulation, new Box(2f, 3f, 2f)),
-                new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect , 1f , new Vector3(30f, 0 , 30f ) , Simulation ,  new Box(17.5f, 10f, 17.5f)),
-                new GameModel(RampModel, Effect, 1f, GenerateRandomPositions(50), Simulation, new ConvexHull(rampVertices, Simulation.BufferPool, out center)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 1f, GenerateRandomPositions(10), Simulation, new Box(15f, 3f, 15f)),
-                new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZ"), Effect ,1f , new Vector3(50f, 0, 50f) ),
-                // new GameModel(Content.Load < Model >(ContentFolder3D + "car2/car2"), Effect, 1f, GenerateRandomPositions(4)),
-                new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect,1f , GenerateRandomPositions(4)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Truck/Caterpillar_Truck"), Effect, 1f, GenerateRandomPositions(4), Simulation, new Box(7f, 2f, 7f)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Street/model/FencesNew"), Effect, 150f, GenerateRandomPositions(30)),
-                new GameModel(Content.Load < Model >(ContentFolder3D + "Street/model/fence2"), Effect, 1f, GenerateRandomPositions(4)),
+            GameModelList = new List<GameModel>();
 
-            };
+            //Load Models posicion fija
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "tgcito-classic/tgcito-classic"), Effect, 0.1f, new Vector3(40f, 6.5f, 10f), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Truck/Caterpillar_Truck"), Effect, 0.01f, new Vector3(10f, 0, 10f), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "trees/Tree4"), Effect, 0.02f, new Vector3(35f, 0f, 55f), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, new Vector3(30, 0, 0), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, new Vector3(50, 10, 50), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "ramp/RampNew"), Effect, 1f, new Vector3(90, 0, 50), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZ"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
+            
+            //Load Models posicion variable
+            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 10, GameModelList ,10f);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation , 15 , GameModelList);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation , 15 , GameModelList);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation , 30 , GameModelList);
 
-            MissileModel = new GameModel(Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2"), Effect, 1f, new Vector3(0, 0, 0));
-            Bullet = new GameModel(Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet"), Effect, 1f, new Vector3(0, 0, 0));
+            //Array de todos los modelos
+            GameModels = GameModelList.ToArray();
 
+            //Load Misiles y bullets
+            MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
+            Bullet = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
+            
+            //Load SoundEffects 
             MissileSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MissileSoundeffect");
             MachineGunSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MachineGunSoundEffect1Short");
             Claxon = Content.Load<SoundEffect>(ContentFolderSoundEffects + "Bocina");
             Explosion = Content.Load<SoundEffect>(ContentFolderSoundEffects + "ExplosionSoundEffect");
 
-
+            //Load Enemy
+            Enemy.LoadContent(Content, Simulation);
 
             // Add walls
             WallWorlds.Add(Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(200f, 0f, 0f));
@@ -363,6 +385,10 @@ namespace TGC.MonoGame.TP
 
         public void mainGameUpdate(GameTime gameTime)
         {
+            Vector3 scale;
+            Quaternion rot;
+            Vector3 translation;
+
             Vector3 forwardLocal = new Vector3(0, 0, -1);
 
             var keyboardState = Keyboard.GetState();
@@ -380,7 +406,6 @@ namespace TGC.MonoGame.TP
                 {
                     MachineGunSound.Play();
                     Missiles.Add(new Missile(Simulation, MainCar));
-
                 }
 
             }
@@ -391,23 +416,24 @@ namespace TGC.MonoGame.TP
             if (keyboardState.IsKeyDown(Keys.B))
                 Claxon.Play();
 
-
             CarSimulation.Update();
 
             Array.ForEach(PowerUps, PowerUp => PowerUp.Update());
-
 
             // Actualizar estado del auto
             MainCar.Update(Keyboard.GetState(), gameTime, Simulation);
 
             if (keyboardState.IsKeyDown(Keys.R))
-                MainCar.Restart(new NumericVector3(0,10f,0) , Simulation);
-            
+                MainCar.Restart(new NumericVector3(0f, 10f, 0f), Simulation);
 
-            Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(Simulation, MainCar));
+            Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(CarBox, MainCar));
 
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, MainCar.World);
+
+            BoundingFrustum.Matrix = FollowCamera.View * FollowCamera.Projection;
+
+            Effect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
 
             SpheresWorld.Clear();
             var quaternionCar = MainCar.quaternion;
@@ -429,10 +455,35 @@ namespace TGC.MonoGame.TP
 
             }
 
+            MainCar.World.Decompose(out scale, out rot, out translation);
+            CarBox.Orientation = Matrix.CreateFromQuaternion(rot);
+            CarBoxPosition = Matrix.CreateTranslation(translation);
+            CarBox.Center = translation;
+            CarOBBWorld = Matrix.CreateScale(CarBox.Extents) *
+                 CarBox.Orientation *
+                 CarBoxPosition;
+
+            Array.ForEach(GameModels, GameModel =>
+            {
+                if (CarBox.Intersects(GameModel.BoundingBox))
+                    GameModel.Touch = true;
+                else
+                    GameModel.Touch = false;
+
+            });
+            Array.ForEach(PowerUps, PowerUp =>
+            {
+                if (CarBox.Intersects(PowerUp.BoundingSphere))
+                    PowerUp.Touch = true;
+                else
+                    PowerUp.Touch = false;
+
+            });
+
+            Enemy.Update(MainCar, gameTime, Simulation);
 
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
-
 
         /// <summary>
         ///     Se llama cada vez que hay que refrescar la pantalla.
@@ -445,12 +496,11 @@ namespace TGC.MonoGame.TP
             switch (gameState)
             {
                 case ST_STAGE_1:
-                    HUD.Draw(gameTime);
+                    HUD.DrawMenu(gameTime);
                     break;
 
                 case ST_STAGE_2:
                     GraphicsDevice.Clear(Color.Beige);
-                    // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
                     Effect.Parameters["View"].SetValue(FollowCamera.View);
                     Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
 
@@ -459,9 +509,9 @@ namespace TGC.MonoGame.TP
 
                     //SpheresWorld.ForEach(sphereWorld => Sphere.Draw(sphereWorld, FollowCamera.View, FollowCamera.Projection));
 
-                    Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.World));
+                    Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
 
-                    Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime));
+                    Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
 
                     if (MainCar.MachineMissile)
                     {
@@ -469,8 +519,10 @@ namespace TGC.MonoGame.TP
                         foreach (Missile missile in Missiles)
                         {
                             missileWorlds.Add(missile.World);
+                            MissileModel.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
+                            //Gizmos.DrawCube (missile.World , Color.DarkBlue);
                         }
-                        MissileModel.Draw(missileWorlds);
+
                     }
                     else
                     {
@@ -478,19 +530,42 @@ namespace TGC.MonoGame.TP
                         foreach (Missile missile in Missiles)
                         {
                             missileWorlds.Add(missile.World);
+                            Bullet.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
+                            Gizmos.DrawCube(Matrix.CreateScale(2) * missile.World, Color.DarkBlue);
                         }
-                        Bullet.Draw(missileWorlds);
+
                     }
 
+                    Array.ForEach(PowerUps, PowerUp =>
+                    {
+                        var r = PowerUp.BoundingSphere.Radius;
+                        if (PowerUp.Touch)
+                            Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+                        else
+                            Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
 
-                    //foreach (var model in GameModels)
-                    //    foreach (var box in model.BBox)
-                    //        Gizmos.DrawCube(BoundingVolumesExtensions.GetCenter(box), BoundingVolumesExtensions.GetExtents(box) , Color.Red);
+                    });
+
+                    Array.ForEach(GameModels, GameModel =>
+                {
+                    if (GameModel.Touch)
+                        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
+                    else
+                        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
+                });
+
+                    Gizmos.DrawCube(CarOBBWorld, Color.Red);
+
+                    Enemy.Draw(FollowCamera, gameTime);
+                    Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
 
                     DrawFloor(FloorQuad);
                     DrawWalls();
                     MainCar.Draw();
-                    //Gizmos.Draw();
+                    Gizmos.Draw();
+
+                    HUD.DrawInGameHUD(gameTime);
+
                     break;
 
                 case ST_GAME_OVER:
@@ -507,30 +582,42 @@ namespace TGC.MonoGame.TP
             // EffectNoTextures.Parameters["DiffuseColor"].SetValue(Color.DarkSeaGreen.ToVector3());
             TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTiling"];
             var world = FloorWorld * Matrix.CreateTranslation(0f, -0.1f, 0f);
+            // var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+            TilingEffect.Parameters["World"].SetValue(world);
             TilingEffect.Parameters["WorldViewProjection"].SetValue(world * FollowCamera.View * FollowCamera.Projection);
             TilingEffect.Parameters["Tiling"].SetValue(new Vector2(350f, 350f));
             TilingEffect.Parameters["Texture"].SetValue(FloorTexture);
+            // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Identity);
+            // TilingEffect.Parameters["NormalMap"].SetValue(FloorNormalMap);
             geometry.Draw(TilingEffect);
 
         }
+        
         private void DrawWalls()
         {
-            // var prim = new BoxPrimitive(GraphicsDevice, new Vector3(1f, 10f, 200f), Color.HotPink);
+            TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTiling"];
             var prim = new QuadPrimitive(GraphicsDevice);
             foreach (var wall in WallWorlds)
             {
-                // EffectNoTextures.Parameters["DiffuseColor"].SetValue(Color.HotPink.ToVector3());
-                // EffectNoTextures.Parameters["World"]?.SetValue(wall);
                 var quadCorrection1 = Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * Matrix.CreateScale(1f, 10f, 200f);
                 var quadCorrection2 = Matrix.CreateRotationZ(MathHelper.ToRadians(90)) * Matrix.CreateScale(1f, 10f, 200f);
+                var world = quadCorrection1 * wall;
+                // var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+                TilingEffect.Parameters["World"].SetValue(world);
                 TilingEffect.Parameters["Tiling"].SetValue(new Vector2(3f, 30f));
                 TilingEffect.Parameters["Texture"].SetValue(WallTexture);
+                // TilingEffect.Parameters["NormalMap"].SetValue(WallNormalMap);
+                // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
                 TilingEffect.Parameters["WorldViewProjection"].SetValue(
-                    quadCorrection1 * wall * FollowCamera.View * FollowCamera.Projection
+                    world * FollowCamera.View * FollowCamera.Projection
                     );
                 prim.Draw(TilingEffect);
+                world = quadCorrection2 * wall;
+                // inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(world));
+                TilingEffect.Parameters["World"].SetValue(world);
+                // TilingEffect.Parameters["InverseTransposeWorld"].SetValue(inverseTransposeWorld);
                 TilingEffect.Parameters["WorldViewProjection"].SetValue(
-                    quadCorrection2 * wall * FollowCamera.View * FollowCamera.Projection
+                    world * FollowCamera.View * FollowCamera.Projection
                     );
                 prim.Draw(TilingEffect);
             }
