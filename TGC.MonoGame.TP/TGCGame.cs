@@ -125,6 +125,7 @@ namespace TGC.MonoGame.TP
         private Effect Effect { get; set; }
         private Effect EffectNoTextures { get; set; }
         private Effect TilingEffect { get; set; }
+        private Effect EnvironmentMapEffect {get; set; }
 
 
         //Modelos y PowerUps
@@ -147,6 +148,9 @@ namespace TGC.MonoGame.TP
         private bool CanShoot { get; set; }
         private Model MissileModel { get; set; }
         public Model Bullet { get; private set; }
+
+        private RenderTargetCube EnvironmentMapRenderTarget {get; set; }
+        private StaticCamera EnvironmentMapCamera {get; set;}
 
         //Enemy
         private Enemy Enemy { get; set; }
@@ -223,6 +227,12 @@ namespace TGC.MonoGame.TP
             //Enemies
             Enemy = new Enemy(new Vector3(-50, 0, 50));
 
+            EnvironmentMapRenderTarget = new RenderTargetCube(GraphicsDevice, 2048, false,
+                SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.DiscardContents);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            EnvironmentMapCamera = new StaticCamera(1f, MainCar.Position, Vector3.UnitX, Vector3.Up);
+            EnvironmentMapCamera.BuildProjection(1f, 1f, 3000f, MathHelper.PiOver2);
+
             base.Initialize();
         }
 
@@ -252,6 +262,7 @@ namespace TGC.MonoGame.TP
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             EffectNoTextures = Content.Load<Effect>(ContentFolderEffects + "BasicShaderNoTextures");
             TilingEffect = Content.Load<Effect>(ContentFolderEffects + "TextureTiling");
+            EnvironmentMapEffect = Content.Load<Effect>(ContentFolderEffects + "EnvironmentMap");
 
             Effect.Parameters["ambientColor"].SetValue(new Vector3(0.7f, 0.7f, 0.5f));
             Effect.Parameters["diffuseColor"].SetValue(new Vector3(0.4f, 0.5f, 0.6f));
@@ -274,7 +285,7 @@ namespace TGC.MonoGame.TP
             WallTexture = Content.Load<Texture2D>(ContentFolderTextures + "stoneTexture");
             WallNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "WallNormalMap");
 
-            MainCar.Load(CarModel, Effect);
+            MainCar.Load(CarModel, EnvironmentMapEffect);
 
             GameModelList = new List<GameModel>();
 
@@ -429,14 +440,19 @@ namespace TGC.MonoGame.TP
 
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, MainCar.World);
+            EnvironmentMapCamera.Position = MainCar.Position + new Vector3(0, 1f, 0);
 
             BoundingFrustum.Matrix = FollowCamera.View * FollowCamera.Projection;
 
-            Effect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
 
             var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), MainCar.Pose.Orientation);
+            Effect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
+            Effect.Parameters["forwardDir"].SetValue(forwardDirection);
+            Effect.Parameters["lightPosition"].SetValue(MainCar.Position + 3 * forwardDirection);
             TilingEffect.Parameters["forwardDir"].SetValue(forwardDirection);
             TilingEffect.Parameters["lightPosition"].SetValue(MainCar.Position + 3 * forwardDirection + new Vector3(0, 10f, 0));
+            TilingEffect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
+            EnvironmentMapEffect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
 
             SpheresWorld.Clear();
             var quaternionCar = MainCar.quaternion;
@@ -504,70 +520,40 @@ namespace TGC.MonoGame.TP
 
                 case ST_STAGE_2:
                     GraphicsDevice.Clear(Color.Beige);
+
+                    // Environment map passes
+                    GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+                    // Draw to our cubemap from the robot position
+                    for (var face = CubeMapFace.PositiveX; face <= CubeMapFace.NegativeZ; face++)
+                    {
+                        // Set the render target as our cubemap face, we are drawing the scene in this texture
+                        GraphicsDevice.SetRenderTarget(EnvironmentMapRenderTarget, face);
+                        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
+
+                        SetCubemapCameraForOrientation(face);
+                        EnvironmentMapCamera.BuildView();
+
+                        // Draw our scene. Do not draw our tank as it would be occluded by itself 
+                        // (if it has backface culling on)
+                        Effect.Parameters["View"].SetValue(EnvironmentMapCamera.View);
+                        Effect.Parameters["Projection"].SetValue(EnvironmentMapCamera.Projection);
+                        drawMainScene(gameTime);
+                    }
+
+                    GraphicsDevice.SetRenderTarget(null);
                     Effect.Parameters["View"].SetValue(FollowCamera.View);
                     Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
 
                     EffectNoTextures.Parameters["View"].SetValue(FollowCamera.View);
                     EffectNoTextures.Parameters["Projection"].SetValue(FollowCamera.Projection);
 
-                    //SpheresWorld.ForEach(sphereWorld => Sphere.Draw(sphereWorld, FollowCamera.View, FollowCamera.Projection));
+                    drawMainScene(gameTime);
 
-                    Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
+                    // Draw the car
+                    EnvironmentMapEffect.CurrentTechnique = EnvironmentMapEffect.Techniques["EnvironmentMap"];
+                    EnvironmentMapEffect.Parameters["environmentMap"].SetValue(EnvironmentMapRenderTarget);
+                    MainCar.Draw(FollowCamera.View, FollowCamera.Projection);
 
-                    Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
-
-                    if (MainCar.MachineMissile)
-                    {
-                        var missileWorlds = new List<Matrix>();
-                        foreach (Missile missile in Missiles)
-                        {
-                            missileWorlds.Add(missile.World);
-                            MissileModel.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
-                            //Gizmos.DrawCube (missile.World , Color.DarkBlue);
-                        }
-
-                    }
-                    else
-                    {
-                        var missileWorlds = new List<Matrix>();
-                        foreach (Missile missile in Missiles)
-                        {
-                            missileWorlds.Add(missile.World);
-                            Bullet.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
-                            Gizmos.DrawCube(Matrix.CreateScale(2) * missile.World, Color.DarkBlue);
-                        }
-
-                    }
-
-                    Array.ForEach(PowerUps, PowerUp =>
-                    {
-                        var r = PowerUp.BoundingSphere.Radius;
-                        if (PowerUp.Touch)
-                            Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
-                        else
-                            Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
-
-                    });
-
-                    Array.ForEach(GameModels, GameModel =>
-                {
-                    if (GameModel.Touch)
-                        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
-                    else
-                        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
-                });
-
-                    Gizmos.DrawCube(CarOBBWorld, Color.Red);
-
-                    Enemy.Draw(FollowCamera, gameTime);
-                    Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
-
-                    DrawFloor(FloorQuad);
-                    DrawWalls();
-                    MainCar.Draw();
-                    Gizmos.Draw();
-
-                    HUD.DrawInGameHUD(gameTime);
 
                     break;
 
@@ -578,6 +564,67 @@ namespace TGC.MonoGame.TP
 
             base.Draw(gameTime);
 
+        }
+
+        private void drawMainScene(GameTime gameTime) {
+            Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
+
+            Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
+
+            if (MainCar.MachineMissile)
+            {
+                var missileWorlds = new List<Matrix>();
+                foreach (Missile missile in Missiles)
+                {
+                    missileWorlds.Add(missile.World);
+                    MissileModel.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
+                    //Gizmos.DrawCube (missile.World , Color.DarkBlue);
+                }
+
+            }
+            else
+            {
+                var missileWorlds = new List<Matrix>();
+                foreach (Missile missile in Missiles)
+                {
+                    missileWorlds.Add(missile.World);
+                    Bullet.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
+                    Gizmos.DrawCube(Matrix.CreateScale(2) * missile.World, Color.DarkBlue);
+                }
+
+            }
+
+            Array.ForEach(PowerUps, PowerUp =>
+            {
+                var r = PowerUp.BoundingSphere.Radius;
+                if (PowerUp.Touch)
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+                else
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            });
+
+            Array.ForEach(GameModels, GameModel =>
+        {
+            if (GameModel.Touch)
+                Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
+            else
+                Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
+        });
+
+            Gizmos.DrawCube(CarOBBWorld, Color.Red);
+
+            Enemy.Draw(FollowCamera, gameTime);
+            Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
+
+            DrawFloor(FloorQuad);
+            DrawWalls();
+
+            // MainCar.Draw();
+
+            Gizmos.Draw();
+
+            HUD.DrawInGameHUD(gameTime);
         }
 
         private void DrawFloor(QuadPrimitive geometry)
@@ -623,6 +670,43 @@ namespace TGC.MonoGame.TP
                     world * FollowCamera.View * FollowCamera.Projection
                     );
                 prim.Draw(TilingEffect);
+            }
+        }
+
+        private void SetCubemapCameraForOrientation(CubeMapFace face)
+        {
+            switch (face)
+            {
+                default:
+                case CubeMapFace.PositiveX:
+                    EnvironmentMapCamera.FrontDirection = -Vector3.UnitX;
+                    EnvironmentMapCamera.UpDirection = Vector3.Down;
+                    break;
+
+                case CubeMapFace.NegativeX:
+                    EnvironmentMapCamera.FrontDirection = Vector3.UnitX;
+                    EnvironmentMapCamera.UpDirection = Vector3.Down;
+                    break;
+
+                case CubeMapFace.PositiveY:
+                    EnvironmentMapCamera.FrontDirection = Vector3.Down;
+                    EnvironmentMapCamera.UpDirection = Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.NegativeY:
+                    EnvironmentMapCamera.FrontDirection = Vector3.Up;
+                    EnvironmentMapCamera.UpDirection = -Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.PositiveZ:
+                    EnvironmentMapCamera.FrontDirection = -Vector3.UnitZ;
+                    EnvironmentMapCamera.UpDirection = Vector3.Down;
+                    break;
+
+                case CubeMapFace.NegativeZ:
+                    EnvironmentMapCamera.FrontDirection = Vector3.UnitZ;
+                    EnvironmentMapCamera.UpDirection = Vector3.Down;
+                    break;
             }
         }
 

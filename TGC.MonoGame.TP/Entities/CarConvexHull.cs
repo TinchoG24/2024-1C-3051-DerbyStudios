@@ -226,10 +226,6 @@ public class CarConvexHull
         rotationQuaternionX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathHelper.ToRadians(-45));
         rotationQuaternionZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.ToRadians(-5));
 
-        var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), bodyReference.Pose.Orientation);
-        Effect.Parameters["forwardDir"].SetValue(forwardDirection);
-        Effect.Parameters["lightPosition"].SetValue(Position + 3 * forwardDirection);
-
         // if (quaternion.Y <= 0.01 && quaternion.Y >= -0.01 && quaternion.W >= MathHelper.ToRadians(179.5) && quaternion.W <= MathHelper.ToRadians(180.5))
 
         World = Matrix.CreateFromQuaternion(rotationQuaternion * quaternion /** rotationQuaternionX * rotationQuaternionZ*/) * Matrix.CreateTranslation(new Vector3(position.X, position.Y, position.Z));
@@ -246,14 +242,14 @@ public class CarConvexHull
 
     }
 
-    public void Draw()
+    public void Draw(Matrix view, Matrix projection)
     {
-        DrawCarBody();
-        DrawFrontWheels();
-        DrawBackWheels();
+        DrawCarBody(view, projection);
+        DrawFrontWheels(view, projection);
+        DrawBackWheels(view, projection);
     }
 
-    private void DrawCarBody()
+    private void DrawCarBody(Matrix view, Matrix projection)
     {
         var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(World));
         for (int mpi = 0; mpi < MainBody.MeshParts.Count; mpi++)
@@ -261,13 +257,14 @@ public class CarConvexHull
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[0][mpi];
             meshPart.Effect.Parameters["World"]?.SetValue(World);
+            Effect.Parameters["WorldViewProjection"].SetValue(World * view * projection);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            Effect.Parameters["baseTexture"].SetValue(texture);
         }
         MainBody.Draw();
     }
 
-    private void DrawFrontWheels()
+    private void DrawFrontWheels(Matrix view, Matrix projection)
     {
         var frontLeftWorld = FrontLeftWheel.ParentBone.ModelTransform * World;
         var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(frontLeftWorld));
@@ -275,9 +272,11 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[2][mpi];
-            meshPart.Effect.Parameters["World"]?.SetValue(Matrix.CreateRotationY(wheelRotation) * frontLeftWorld);
+            var localWorld = Matrix.CreateRotationY(wheelRotation) * frontLeftWorld;
+            meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
+            Effect.Parameters["WorldViewProjection"].SetValue(localWorld * view * projection);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            Effect.Parameters["baseTexture"].SetValue(texture);
         }
         FrontLeftWheel.Draw();
 
@@ -287,14 +286,16 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[1][mpi];
-            meshPart.Effect.Parameters["World"]?.SetValue(Matrix.CreateRotationY(wheelRotation) * frontRightWorld);
+            var localWorld = Matrix.CreateRotationY(wheelRotation) * frontRightWorld;
+            meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
+            Effect.Parameters["WorldViewProjection"].SetValue(localWorld * view * projection);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            Effect.Parameters["baseTexture"].SetValue(texture);
         }
         FrontRightWheel.Draw();
     }
 
-    private void DrawBackWheels()
+    private void DrawBackWheels(Matrix view, Matrix projection)
     {
         var backLeftWorld = BackLeftWheel.ParentBone.ModelTransform * World;
         var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(backLeftWorld));
@@ -302,9 +303,11 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[3][mpi];
-            meshPart.Effect.Parameters["World"]?.SetValue(backLeftWorld);
+            var localWorld = Matrix.CreateRotationY(wheelRotation) * backLeftWorld;
+            meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
+            Effect.Parameters["WorldViewProjection"].SetValue(localWorld * view * projection);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            Effect.Parameters["baseTexture"].SetValue(texture);
         }
         BackLeftWheel.Draw();
 
@@ -314,9 +317,11 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[4][mpi];
-            meshPart.Effect.Parameters["World"].SetValue(backRightWorld);
+            var localWorld = Matrix.CreateRotationY(wheelRotation) * backRightWorld;
+            meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
+            Effect.Parameters["WorldViewProjection"].SetValue(localWorld * view * projection);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            Effect.Parameters["baseTexture"].SetValue(texture);
         }
         BackRightWheel.Draw();
     }
