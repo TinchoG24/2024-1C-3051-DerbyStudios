@@ -227,6 +227,7 @@ public class CarConvexHull
         rotationQuaternionZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.ToRadians(-5));
 
         var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), bodyReference.Pose.Orientation);
+        Effect.Parameters["forwardDir"].SetValue(forwardDirection);
         Effect.Parameters["lightPosition"].SetValue(Position + 3 * forwardDirection);
 
         // if (quaternion.Y <= 0.01 && quaternion.Y >= -0.01 && quaternion.W >= MathHelper.ToRadians(179.5) && quaternion.W <= MathHelper.ToRadians(180.5))
