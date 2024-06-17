@@ -21,6 +21,7 @@ float KSpecular;
 float shininess; 
 float3 lightPosition;
 float3 eyePosition; 
+float3 forwardDir;
 
 texture Texture;
 sampler2D textureSampler = sampler_state
@@ -106,19 +107,20 @@ float4 BaseTilingWithLightsPS(VertexShaderOutput input) : COLOR
 {
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
     float4 textureNormal = tex2D(normalSampler, input.TextureCoordinate);
-    float4 normal = mul(textureNormal, InverseTransposeWorld);
+    float4 normal = normalize(mul(InverseTransposeWorld, textureNormal));
 
     float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
+    float dirCoef = saturate(-3 * dot(lightDirection.xz, forwardDir.xz) + 1);
     float3 viewDirection = normalize(eyePosition - input.WorldPosition.xyz);
     float3 halfVector = normalize(lightDirection + viewDirection);
     
 	
     float NdotL = saturate(dot(normal.xyz, lightDirection));
-    float3 diffuseLight = KDiffuse * diffuseColor * NdotL;
+    float3 diffuseLight = dirCoef * KDiffuse * diffuseColor * NdotL;
 
 	
     float NdotH = dot(normal.xyz, halfVector);
-    float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
+    float3 specularLight = dirCoef * sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
     
  
     float4 finalColor = float4(saturate(ambientColor * KAmbient + diffuseLight) * textureColor.rgb + specularLight, textureColor.a);
