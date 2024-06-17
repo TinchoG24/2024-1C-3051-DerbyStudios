@@ -34,6 +34,8 @@ namespace TGC.MonoGame.TP.Entities
 
         public Box EnemyBox { get; set; }
 
+        private Quaternion rotationQuaternion;
+
         public Matrix EnemyWorld { get; set; }
 
         public Model EnemyModel { get; set; }
@@ -108,44 +110,48 @@ namespace TGC.MonoGame.TP.Entities
             Vector3 direction = Vector3.Normalize(MainCar.Position - Position);
 
             // Fuerza de aceleración
-            float acceleration = 10f;
+            float acceleration = 0.5f;
             Vector3 force = direction * acceleration;
-
+       
             // Aplica la fuerza al auto enemigo
+            if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, force.Y, force.Z));
 
+
+            rotationQuaternion = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathHelper.ToRadians(180));
             // Rotación deseada para el auto enemigo
             Matrix rotationMatrix = Matrix.CreateLookAt(Vector3.Zero, direction, Vector3.Up);
-            Quaternion targetRotation = Quaternion.CreateFromRotationMatrix(rotationMatrix);
+            Quaternion targetRotation = Quaternion.CreateFromRotationMatrix(rotationMatrix ) * rotationQuaternion;
 
             // Calcula el torque necesario para girar el auto enemigo hacia la rotación deseada
-            Quaternion currentRotation = bodyReference.Pose.Orientation;
-            Quaternion rotationDifference = targetRotation * Quaternion.Conjugate(currentRotation);
-            Vector3 angularVelocityChange;
-            float angle;
-            Utils.ToAxisAngle(rotationDifference, out angularVelocityChange, out angle);
+            //Quaternion currentRotation = bodyReference.Pose.Orientation;
+            //Quaternion rotationDifference = targetRotation * Quaternion.Conjugate(currentRotation);
+            //Vector3 angularVelocityChange;
+            //float angle;
+            //Utils.ToAxisAngle(rotationDifference, out angularVelocityChange, out angle);
 
-            // Asegura que el ángulo sea el más pequeño posible
-            if (angle > MathHelper.Pi)
-                angle -= MathHelper.TwoPi;
+            //// Asegura que el ángulo sea el más pequeño posible
+            //if (angle > MathHelper.Pi)
+            //    angle -= MathHelper.TwoPi;
 
-            Vector3 torque = angularVelocityChange * angle * 0.5f; // Constante de ajuste para la velocidad de rotación
+            //Vector3 torque = angularVelocityChange * angle * 1f; // Constante de ajuste para la velocidad de rotación
 
-            // Aplica el torque al auto enemigo
-            bodyReference.ApplyAngularImpulse(new NumericVector3(torque.X, torque.Y, torque.Z));
+            //// Aplica el torque al auto enemigo
+            //bodyReference.ApplyAngularImpulse(new NumericVector3(0, torque.Y, 0));
 
             // Simula el frenado si está cerca del objetivo
             float distanceToTarget = Vector3.Distance(MainCar.Position, Position);
-            if (distanceToTarget < 5f)
+            if (distanceToTarget < 7f)
             {
                 // Aplica una fuerza negativa para frenar
-                bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 0.5f);
+                bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 1.5f);
             }
 
             // Actualiza la posición y la orientación del enemigo en el mundo
             Position = new Vector3(bodyReference.Pose.Position.X, bodyReference.Pose.Position.Y, bodyReference.Pose.Position.Z);
-            currentRotation = bodyReference.Pose.Orientation;
-            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateFromQuaternion(currentRotation) * Matrix.CreateTranslation(Position);
+            //currentRotation = bodyReference.Pose.Orientation;
+
+            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateFromQuaternion(rotationQuaternion /** currentRotation*/) * Matrix.CreateTranslation(Position);
 
             // Descomponer la matriz del mundo del enemigo para obtener la escala, la rotación y la traslación
             EnemyWorld.Decompose(out  scale, out  rot, out  translation);

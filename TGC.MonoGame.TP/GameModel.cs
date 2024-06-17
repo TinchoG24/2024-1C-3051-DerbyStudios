@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using BepuPhysics.Constraints;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TGC.MonoGame.Samples.Collisions;
@@ -22,7 +23,19 @@ public class GameModel : BaseModel
         Position = position;
         World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
 
-        ((BasicEffect)Model.Meshes.FirstOrDefault()?.Effects.FirstOrDefault())?.EnableDefaultLighting();
+
+        foreach (var mesh in Model.Meshes)
+        {
+            var textures = new List<Texture2D>();
+
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                var texture = ((BasicEffect)meshPart.Effect)?.Texture;
+                textures.Add(texture);
+                meshPart.Effect = Effect;
+            }
+            MeshPartTextures.Add(textures);
+        }
 
         BoundingBox = BoundingVolumesExtensions.CreateAABBFrom(Model);
         BoundingBox = BoundingVolumesExtensions.ScaleCentered(BoundingBox, Scale);
@@ -42,16 +55,36 @@ public class GameModel : BaseModel
     {
         if (boundingFrustum.Intersects(boundingBox))
         {
-            var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(World));
-            Effect.Parameters["World"]?.SetValue(World);
-            Effect.Parameters["View"].SetValue(FollowCamera.View);
-            Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
-            Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
+            for (int mi = 0; mi < Model.Meshes.Count; mi++)
+            {
+                var mesh = Model.Meshes[mi];
 
-            model.Draw(World, FollowCamera.View, FollowCamera.Projection);
+                var inverseTransposeWorld = Matrix.Transpose(Matrix.Invert(World));
+                Effect.Parameters["World"]?.SetValue(World);
+                Effect.Parameters["View"].SetValue(FollowCamera.View);
+                Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
+                Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
+
+                for (int mpi = 0; mpi < mesh.MeshParts.Count; mpi++)
+                {   
+                   
+                        var meshPart = mesh.MeshParts[mpi]; 
+                        var texture = MeshPartTextures[mi][mpi];
+                        meshPart.Effect.Parameters["World"]?.SetValue(World);
+                        meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
+                        Effect.Parameters["ModelTexture"]?.SetValue(texture);
+
+                    mesh.Draw();
+                }
+            }
+
+
         }
-    }
 
+        //model.Draw(World, FollowCamera.View, FollowCamera.Projection);
+    }
 }
+
+
 
 

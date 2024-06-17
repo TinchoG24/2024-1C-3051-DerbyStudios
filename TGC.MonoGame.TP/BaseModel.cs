@@ -25,5 +25,7 @@ namespace TGC.MonoGame.TP
 
         public List<List<Texture2D>> MeshPartTextures = new List<List<Texture2D>>();
 
+        
+
     }
 }
