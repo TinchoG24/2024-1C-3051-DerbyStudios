@@ -42,9 +42,9 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     VertexShaderOutput output = (VertexShaderOutput) 0;
 
 // Animate position
-    float atenuacion = 2.8;
-    float rotationSpeed = 30.0; // Velocidad de rotaci�n en grados por segundo
-    float verticalSpeed = 1.0; // Velocidad de movimiento vertical
+    float atenuacion = 2;
+    float rotationSpeed = 5.0; // Velocidad de rotaci�n en grados por segundo
+    float verticalSpeed = 0.3; // Velocidad de movimiento vertical
     float3 position = input.Position;
 
 // Calcula la rotaci�n en el eje y
