@@ -32,6 +32,9 @@ namespace TGC.MonoTP
 
         Texture2D OilBarTexture;
         float currentOil = 100f;
+
+        public int Stars { get; private set; }
+
         float maxOil = 100f;
 
         private Vector2 position { get; set; }
@@ -49,13 +52,15 @@ namespace TGC.MonoTP
 
         }
 
-        public void Update(GameTime gameTime , float health , float oil)
+        public void Update(GameTime gameTime , float health , float oil , int stars)
         {
             this.currentHealth = health;
             this.currentOil = oil;
+            this.Stars = stars;
+
             currentHealth = MathHelper.Clamp(currentHealth, 0, maxHealth);
             currentOil = MathHelper.Clamp(currentOil, 0, maxOil);
-
+            
         }
 
         public void DrawMenu(GameTime gameTime)
@@ -69,29 +74,31 @@ namespace TGC.MonoTP
             SpriteBatch.Begin();
             SpriteBatch.Draw(hudImage, position, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
             SpriteBatch.End();
-            DrawCenterTextY("DERBY GAMES", 100, 5);
-            DrawCenterTextY("CONTROLES -  WASD", 250, 1);
-            DrawCenterTextY("SALTO - SPACE", 300, 1);
-            DrawCenterTextY("SHOOT - Z", 350, 1);
-            DrawCenterTextY("CLAXON - B", 400, 1);
-            DrawCenterTextY("RESTART - R", 450, 1);
-            DrawCenterTextY("GOD MODE  -  G", 500, 1);
-            DrawCenterTextY("Presione SPACE para comenzar...", 600, 1);
+            DrawCenterTextY("DERBY GAMES", 100, 5, Color.Black);
+            DrawCenterTextY("CONTROLES -  WASD", 250, 1, Color.Black);
+            DrawCenterTextY("SALTO - SPACE", 300, 1, Color.Black);
+            DrawCenterTextY("SHOOT - Z", 350, 1, Color.Black);
+            DrawCenterTextY("CLAXON - B", 400, 1, Color.Black);
+            DrawCenterTextY("RESTART - R", 450, 1, Color.Black);
+            DrawCenterTextY("GOD MODE  -  G", 500, 1, Color.Black);
+            DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black);
         }
 
         public void DrawInGameHUD(GameTime gameTime){
             
             SpriteBatch.Begin();
 
-            SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.Black);
+            SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.YellowGreen);
             DrawHealthBar(new Vector2(150, 10), currentHealth / maxHealth);
             SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 10), Color.Black);
             
-            SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 30), Color.Black);
+            SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 30), Color.YellowGreen);
             DrawOilBar(new Vector2(150, 30), currentOil / maxOil);
             SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%" , new Vector2(160, 30), Color.Black);
 
             SpriteBatch.End();
+
+            DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10" , 25f , 1 , Color.YellowGreen);
 
 
             var secs = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
@@ -157,14 +164,14 @@ namespace TGC.MonoTP
             SpriteBatch.End();
         }
 
-        public void DrawCenterTextY(string msg, float Y, float escala)
+        public void DrawCenterTextY(string msg, float Y, float escala, Color color)
         {
             var W = GraphicsDevice.Viewport.Width;
             var H = GraphicsDevice.Viewport.Height;
             var size = SpriteFont.MeasureString(msg) * escala;
             SpriteBatch.Begin(SpriteSortMode.Deferred, null, null, DepthStencilState.Default, null, null,
                 Matrix.CreateScale(escala) * Matrix.CreateTranslation((W - size.X) / 2, Y, 0));
-            SpriteBatch.DrawString(SpriteFont, msg, new Vector2(0, 0), Color.Black);
+            SpriteBatch.DrawString(SpriteFont, msg, new Vector2(0, 0), color);
             SpriteBatch.End();
         }
 

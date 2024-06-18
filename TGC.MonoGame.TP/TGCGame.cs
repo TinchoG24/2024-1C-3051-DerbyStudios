@@ -545,7 +545,7 @@ namespace TGC.MonoGame.TP
 
             //MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            HUD.Update(gameTime, MainCar.Health, MainCar.Oil);
+            HUD.Update(gameTime, MainCar.Health, MainCar.Oil , MainCar.Stars);
 
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
