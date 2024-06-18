@@ -547,6 +547,7 @@ namespace TGC.MonoGame.TP
 
             HUD.Update(gameTime, MainCar.Health, MainCar.Oil , MainCar.Stars);
 
+
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
 

@@ -12,7 +12,7 @@ using TGC.MonoGame.TP;
 
 namespace TGC.MonoTP
 {
-    public class HUD 
+    public class HUD
     {
 
         public const string ContentFolder3D = "Models/";
@@ -38,12 +38,12 @@ namespace TGC.MonoTP
         float maxOil = 100f;
 
         private Vector2 position { get; set; }
-        private Texture2D hudImage { get; set; }      
-        private float scale { get; set; }      
+        private Texture2D hudImage { get; set; }
+        private float scale { get; set; }
         private GraphicsDevice GraphicsDevice;
         private ContentManager Content;
 
-        public HUD(ContentManager content , GraphicsDevice graphicsDevice)
+        public HUD(ContentManager content, GraphicsDevice graphicsDevice)
         {
             this.Content = content;
             this.GraphicsDevice = graphicsDevice;
@@ -52,7 +52,7 @@ namespace TGC.MonoTP
 
         }
 
-        public void Update(GameTime gameTime , float health , float oil , int stars)
+        public void Update(GameTime gameTime, float health, float oil, int stars)
         {
             this.currentHealth = health;
             this.currentOil = oil;
@@ -60,7 +60,7 @@ namespace TGC.MonoTP
 
             currentHealth = MathHelper.Clamp(currentHealth, 0, maxHealth);
             currentOil = MathHelper.Clamp(currentOil, 0, maxOil);
-            
+
         }
 
         public void DrawMenu(GameTime gameTime)
@@ -84,21 +84,29 @@ namespace TGC.MonoTP
             DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black);
         }
 
-        public void DrawInGameHUD(GameTime gameTime){
-            
+        public void DrawInGameHUD(GameTime gameTime)
+        {
+
             SpriteBatch.Begin();
 
             SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.YellowGreen);
             DrawHealthBar(new Vector2(150, 10), currentHealth / maxHealth);
             SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 10), Color.Black);
-            
+
             SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 30), Color.YellowGreen);
             DrawOilBar(new Vector2(150, 30), currentOil / maxOil);
-            SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%" , new Vector2(160, 30), Color.Black);
+            SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 30), Color.Black);
 
             SpriteBatch.End();
 
-            DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10" , 25f , 1 , Color.YellowGreen);
+            DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10", 25f, 1, Color.YellowGreen);
+
+            if (currentHealth == 0)
+                DrawCenterText(" L O S E ", 5f);
+
+            if (Stars == 3)
+                DrawCenterText(" W I N ", 5f);
+
 
 
             var secs = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
@@ -148,6 +156,8 @@ namespace TGC.MonoTP
             hudImage = Content.Load<Texture2D>(ContentFolder3D + "HUD/HUD1");
 
         }
+
+    
 
         public void UnloadContent()
         {
