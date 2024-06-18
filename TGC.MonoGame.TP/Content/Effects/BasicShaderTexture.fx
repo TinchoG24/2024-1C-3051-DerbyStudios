@@ -19,10 +19,10 @@ float4x4 Projection;
 
 float3 DiffuseColor;
 
-texture Texture;
+texture ModelTexture;
 sampler2D textureSampler = sampler_state
 {
-    Texture = (Texture);
+    Texture = (ModelTexture);
     MagFilter = Linear;
     MinFilter = Linear;
     AddressU = Wrap;

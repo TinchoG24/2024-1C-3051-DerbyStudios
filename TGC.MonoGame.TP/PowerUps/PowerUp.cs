@@ -102,8 +102,8 @@ namespace TGC.MonoGame.TP.PowerUps
                 PowerUpEffect.Parameters["World"].SetValue(PowerUpWorld);
                 PowerUpEffect.Parameters["View"].SetValue(Camera.View);
                 PowerUpEffect.Parameters["Projection"].SetValue(Camera.Projection);
-                PowerUpEffect.Parameters["ModelTexture"].SetValue(PowerUpTexture);
-                PowerUpEffect.Parameters["Time"].SetValue(Convert.ToSingle(time));
+                PowerUpEffect.Parameters["ModelTexture"]?.SetValue(PowerUpTexture);
+                PowerUpEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
 
 
                 if (boundingFrustum.Intersects(boundingSphere))

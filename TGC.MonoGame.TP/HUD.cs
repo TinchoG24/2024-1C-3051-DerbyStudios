@@ -82,6 +82,7 @@ namespace TGC.MonoTP
         public void DrawInGameHUD(GameTime gameTime){
             
             SpriteBatch.Begin();
+
             SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.Black);
             DrawHealthBar(new Vector2(150, 10), currentHealth / maxHealth);
             SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 10), Color.Black);

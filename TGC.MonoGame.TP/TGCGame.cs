@@ -131,6 +131,8 @@ namespace TGC.MonoGame.TP
         private PowerUp[] PowerUps { get; set; }
         private GameModel[] GameModels { get; set; }
         private List<GameModel> GameModelList { get; set; }
+        private PowerUp[] HealthPacks { get; set; }
+        private PowerUp[] Stars { get; set; }
 
         //SoundEffects 
         private SoundEffect MachineGunSound { get; set; }
@@ -219,6 +221,20 @@ namespace TGC.MonoGame.TP
                 new MissilePowerUp(new Vector3(20,2,-20)),
                 new MachineGunPowerUp(new Vector3(-20,2,20))
             };
+
+            HealthPacks = new PowerUp[]
+            {
+                new HealthPack(new Vector3(10 ,3 ,-10)),
+                new HealthPack(new Vector3(-10 ,3 ,10)),
+                new HealthPack(new Vector3(-10 ,3 ,-10))
+            };
+
+            Stars = new PowerUp[]
+           {
+                new Star(new Vector3(30 ,5 ,-30)),
+                new Star(new Vector3(-30 ,5 ,30)),
+                new Star(new Vector3(-30 ,5 ,-30))
+           };
             //Bullets y Misiles 
             SpheresWorld = new List<Matrix>();
             Missiles = new List<Missile>();
@@ -258,6 +274,8 @@ namespace TGC.MonoGame.TP
 
             //Load PowersUps
             Array.ForEach(PowerUps, powerUp => powerUp.LoadContent(Content));
+            Array.ForEach(Stars, star => star.LoadContent(Content));
+            Array.ForEach(HealthPacks, pack => pack.LoadContent(Content));
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -437,6 +455,8 @@ namespace TGC.MonoGame.TP
             CarSimulation.Update();
 
             Array.ForEach(PowerUps, PowerUp => PowerUp.Update());
+            Array.ForEach(Stars, star => star.Update());
+            Array.ForEach(HealthPacks, pack => pack.Update());
 
             // Actualizar estado del auto
             MainCar.Update(Keyboard.GetState(), gameTime, Simulation);
@@ -445,6 +465,8 @@ namespace TGC.MonoGame.TP
                 MainCar.Restart(new NumericVector3(0f, 10f, 0f), Simulation);
 
             Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(CarBox, MainCar));
+            Array.ForEach(HealthPacks, pack => pack.ActivateIfBounding(CarBox, MainCar));
+            Array.ForEach(Stars, star => star.ActivateIfBounding(CarBox, MainCar));
 
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, MainCar.World);
@@ -509,6 +531,9 @@ namespace TGC.MonoGame.TP
 
             Enemy.Update(MainCar, gameTime, Simulation);
 
+            if (CarBox.Intersects(Enemy.EnemyOBB))
+                MainCar.Health -= 0.2f;
+
             MainCar.Oil -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             foreach (var oilBox in Gasolines)
@@ -516,8 +541,9 @@ namespace TGC.MonoGame.TP
                     MainCar.Oil += 0.2f;
 
             MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
+            MainCar.Health = MathHelper.Clamp(MainCar.Health, 0, 100);
 
-            MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            //MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             HUD.Update(gameTime, MainCar.Health, MainCar.Oil);
 
@@ -591,6 +617,8 @@ namespace TGC.MonoGame.TP
             Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
 
             Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
+            Array.ForEach(Stars, star => star.Draw(FollowCamera, gameTime, BoundingFrustum, star.BoundingSphere));
+            Array.ForEach(HealthPacks, pack => pack.Draw(FollowCamera, gameTime, BoundingFrustum, pack.BoundingSphere));
 
             if (MainCar.MachineMissile)
             {
@@ -624,6 +652,24 @@ namespace TGC.MonoGame.TP
                     Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
 
             });
+            Array.ForEach(Stars, PowerUp =>
+            {
+                var r = PowerUp.BoundingSphere.Radius;
+                if (PowerUp.Touch)
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+                else
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            });
+            Array.ForEach(HealthPacks, PowerUp =>
+            {
+                var r = PowerUp.BoundingSphere.Radius;
+                if (PowerUp.Touch)
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+                else
+                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            });
 
             Array.ForEach(GameModels, GameModel =>
         {
@@ -632,6 +678,7 @@ namespace TGC.MonoGame.TP
             else
                 Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
         });
+
 
             Gizmos.DrawCube(CarOBBWorld, Color.Red);
 

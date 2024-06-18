@@ -35,6 +35,7 @@ public class CarConvexHull
     public Matrix World { get; set; }
     public BodyHandle CarHandle { get; private set; }
     private ConvexHull CarConvex { get; }
+    public int Stars { get; set; }
 
     public Quaternion quaternion = new Quaternion();
     public Quaternion rotationQuaternion = new Quaternion();
