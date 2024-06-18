@@ -80,12 +80,12 @@ namespace TGC.MonoGame.TP
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
         }
-        
+
         public Gizmos Gizmos { get; set; }
         private GraphicsDeviceManager Graphics { get; set; }
-       
+
         //Random 
-        private Random _random {  get; set; }
+        private Random _random { get; set; }
 
         //Frustum Optimizacion
         private BoundingFrustum BoundingFrustum { get; set; }
@@ -94,7 +94,7 @@ namespace TGC.MonoGame.TP
         private FollowCamera FollowCamera { get; set; }
 
         //Sprites
-        public SpriteFont SpriteFont {  get; set; } 
+        public SpriteFont SpriteFont { get; set; }
         private SpriteBatch SpriteBatch { get; set; }
 
 
@@ -105,7 +105,7 @@ namespace TGC.MonoGame.TP
         private Texture2D WallNormalMap { get; set; }
         private QuadPrimitive FloorQuad { get; set; }
         private Matrix FloorWorld { get; set; }
-        
+
         private List<Matrix> WallWorlds = new List<Matrix>();
 
 
@@ -119,14 +119,12 @@ namespace TGC.MonoGame.TP
         public OrientedBoundingBox CarBox { get; private set; }
 
 
-        
-
         //Efectos 
         private Effect Effect { get; set; }
         private Effect EffectTexture { get; set; }
         private Effect EffectNoTextures { get; set; }
         private Effect TilingEffect { get; set; }
-        private Effect EnvironmentMapEffect {get; set; }
+        private Effect EnvironmentMapEffect { get; set; }
 
 
         //Modelos y PowerUps
@@ -150,8 +148,8 @@ namespace TGC.MonoGame.TP
         private Model MissileModel { get; set; }
         public Model Bullet { get; private set; }
 
-        private RenderTargetCube EnvironmentMapRenderTarget {get; set; }
-        private StaticCamera EnvironmentMapCamera {get; set;}
+        private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
+        private StaticCamera EnvironmentMapCamera { get; set; }
 
         //Enemy
         private Enemy Enemy { get; set; }
@@ -160,8 +158,11 @@ namespace TGC.MonoGame.TP
         HUD HUD { get; set; }
         public Song backgroundMusic { get; private set; }
         public SoundEffect soundEffect { get; private set; }
+        public GameModel Gasoline { get; private set; }
+        public List<GameModel> Gasolines { get; private set; }
 
         private float time = 0;
+        private float currentHealth;
 
 
         /// <summary>
@@ -297,11 +298,12 @@ namespace TGC.MonoGame.TP
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "trees/Tree4"), Effect, 0.02f, new Vector3(35f, 0f, 55f), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, new Vector3(30, 0, 0), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, new Vector3(50, 10, 50), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
+            Gasoline = new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation);
+            GameModelList.Add(Gasoline);
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "ramp/RampNew"), Effect, 1f, new Vector3(90, 0, 50), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZ"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZNew"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
@@ -309,8 +311,10 @@ namespace TGC.MonoGame.TP
             //Load Models posicion variable
             Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 10, GameModelList, 10f);
             Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation, 15, GameModelList);
-            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 15, GameModelList);
+            Gasolines = Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 15, GameModelList);
             Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation, 30, GameModelList);
+
+            Gasolines.Add(Gasoline);
 
             //Array de todos los modelos
             GameModels = GameModelList.ToArray();
@@ -318,7 +322,7 @@ namespace TGC.MonoGame.TP
             //Load Misiles y bullets
             MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
             Bullet = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
-            
+
             //Load SoundEffects 
             MissileSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MissileSoundeffect");
             MachineGunSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MachineGunSoundEffect1Short");
@@ -372,6 +376,8 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
+
+
             switch (gameState)
             {
                 case ST_STAGE_1:
@@ -501,7 +507,19 @@ namespace TGC.MonoGame.TP
 
             });
 
-            // Enemy.Update(MainCar, gameTime, Simulation);
+            Enemy.Update(MainCar, gameTime, Simulation);
+
+            MainCar.Oil -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            foreach (var oilBox in Gasolines)
+                if (CarBox.Intersects(oilBox.BoundingBox))
+                    MainCar.Oil += 0.2f;
+
+            MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
+
+            MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            HUD.Update(gameTime, MainCar.Health, MainCar.Oil);
 
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
@@ -568,7 +586,8 @@ namespace TGC.MonoGame.TP
 
         }
 
-        private void drawMainScene(GameTime gameTime) {
+        private void drawMainScene(GameTime gameTime)
+        {
             Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
 
             Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
@@ -622,7 +641,7 @@ namespace TGC.MonoGame.TP
             DrawFloor(FloorQuad);
             DrawWalls();
 
-            // MainCar.Draw();
+            //MainCar.Draw();
 
             Gizmos.Draw();
 
@@ -644,7 +663,7 @@ namespace TGC.MonoGame.TP
             geometry.Draw(TilingEffect);
 
         }
-        
+
         private void DrawWalls()
         {
             TilingEffect.CurrentTechnique = TilingEffect.Techniques["BaseTilingWithLights"];

@@ -20,13 +20,6 @@ namespace TGC.MonoGame.TP;
 
 public class CarConvexHull
 {
-    public bool CanShoot { get; set; }
-    public bool MachineGun { get; set; }
-    public bool MachineMissile { get; set; }
-    public Vector3 Position { get; set; }
-    public RigidPose Pose { get; private set; }
-    public Matrix World { get; set; }
-
     private Model Model;
     private ModelMesh MainBody;
     private ModelMesh FrontLeftWheel;
@@ -34,14 +27,16 @@ public class CarConvexHull
     private ModelMesh BackLeftWheel;
     private ModelMesh BackRightWheel;
 
+    public bool CanShoot { get; set; }
+    public bool MachineGun { get; set; }
+    public bool MachineMissile { get; set; }
+    public Vector3 Position { get; set; }
+    public RigidPose Pose { get; private set; }
+    public Matrix World { get; set; }
     public BodyHandle CarHandle { get; private set; }
-
-    private ConvexHull CarConvex;
+    private ConvexHull CarConvex { get; }
 
     public Quaternion quaternion = new Quaternion();
-    private Quaternion rotationQuaternionY;
-    private Quaternion rotationQuaternionX;
-    private Quaternion rotationQuaternionZ;
     public Quaternion rotationQuaternion = new Quaternion();
 
     public float maxSpeed = 20f;
@@ -51,6 +46,9 @@ public class CarConvexHull
     private Effect Effect;
 
     private float wheelRotation = 0f;
+
+    public float Oil = 100f;
+    public float Health = 100f;
 
     private static NumericVector3[] carColliderVertices = new NumericVector3[]
     {
@@ -223,12 +221,10 @@ public class CarConvexHull
         quaternion = bodyReference.Pose.Orientation;
 
         rotationQuaternion = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathHelper.ToRadians(180));
-        rotationQuaternionX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathHelper.ToRadians(-45));
-        rotationQuaternionZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.ToRadians(-5));
 
         // if (quaternion.Y <= 0.01 && quaternion.Y >= -0.01 && quaternion.W >= MathHelper.ToRadians(179.5) && quaternion.W <= MathHelper.ToRadians(180.5))
 
-        World = Matrix.CreateFromQuaternion(rotationQuaternion * quaternion /** rotationQuaternionX * rotationQuaternionZ*/) * Matrix.CreateTranslation(new Vector3(position.X, position.Y, position.Z));
+        World = Matrix.CreateFromQuaternion(rotationQuaternion * quaternion) * Matrix.CreateTranslation(new Vector3(position.X, position.Y, position.Z));
     }
 
     public void Restart(NumericVector3 pos, Simulation simulation)

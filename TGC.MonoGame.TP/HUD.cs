@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,7 +25,16 @@ namespace TGC.MonoTP
         private SpriteFont SpriteFont;
         private SpriteBatch SpriteBatch;
         private Texture2D texture;
-       private Vector2 position { get; set; }
+
+        Texture2D healthBarTexture;
+        float currentHealth = 100f;
+        float maxHealth = 100f;
+
+        Texture2D OilBarTexture;
+        float currentOil = 100f;
+        float maxOil = 100f;
+
+        private Vector2 position { get; set; }
         private Texture2D hudImage { get; set; }      
         private float scale { get; set; }      
         private GraphicsDevice GraphicsDevice;
@@ -34,10 +44,17 @@ namespace TGC.MonoTP
         {
             this.Content = content;
             this.GraphicsDevice = graphicsDevice;
+            healthBarTexture = CreateRectangleTexture(GraphicsDevice, 200, 20, Color.Red);
+            OilBarTexture = CreateRectangleTexture(GraphicsDevice, 200, 20, Color.Blue);
+
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(GameTime gameTime , float health , float oil)
         {
+            this.currentHealth = health;
+            this.currentOil = oil;
+            currentHealth = MathHelper.Clamp(currentHealth, 0, maxHealth);
+            currentOil = MathHelper.Clamp(currentOil, 0, maxOil);
 
         }
 
@@ -63,6 +80,19 @@ namespace TGC.MonoTP
         }
 
         public void DrawInGameHUD(GameTime gameTime){
+            
+            SpriteBatch.Begin();
+            SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.Black);
+            DrawHealthBar(new Vector2(150, 10), currentHealth / maxHealth);
+            SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 10), Color.Black);
+            
+            SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 30), Color.Black);
+            DrawOilBar(new Vector2(150, 30), currentOil / maxOil);
+            SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%" , new Vector2(160, 30), Color.Black);
+
+            SpriteBatch.End();
+
+
             var secs = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
 
             DrawRightText("Tiempo: " + secs.ToString(), 25f, 1);
@@ -146,6 +176,34 @@ namespace TGC.MonoTP
                 Matrix.CreateScale(escala) * Matrix.CreateTranslation(W - size.X - 20, Y, 0));
             SpriteBatch.DrawString(SpriteFont, msg, new Vector2(0, 0), Color.YellowGreen);
             SpriteBatch.End();
+        }
+        private void DrawHealthBar(Vector2 position, float healthPercentage)
+        {
+            int barWidth = (int)(healthBarTexture.Width * healthPercentage);
+            Rectangle sourceRectangle = new Rectangle(0, 0, barWidth, healthBarTexture.Height);
+            Rectangle destinationRectangle = new Rectangle((int)position.X, (int)position.Y, barWidth, healthBarTexture.Height);
+
+            SpriteBatch.Draw(healthBarTexture, destinationRectangle, sourceRectangle, Color.White);
+        }
+        private void DrawOilBar(Vector2 position, float OilPorcentage)
+        {
+            int barWidth = (int)(OilBarTexture.Width * OilPorcentage);
+            Rectangle sourceRectangle = new Rectangle(0, 0, barWidth, OilBarTexture.Height);
+            Rectangle destinationRectangle = new Rectangle((int)position.X, (int)position.Y, barWidth, OilBarTexture.Height);
+
+            SpriteBatch.Draw(OilBarTexture, destinationRectangle, sourceRectangle, Color.White);
+        }
+
+        private Texture2D CreateRectangleTexture(GraphicsDevice graphicsDevice, int width, int height, Color color)
+        {
+            Texture2D texture = new Texture2D(graphicsDevice, width, height);
+            Color[] colorData = new Color[width * height];
+
+            for (int i = 0; i < colorData.Length; i++)
+                colorData[i] = color;
+
+            texture.SetData(colorData);
+            return texture;
         }
 
         public void GameOver()

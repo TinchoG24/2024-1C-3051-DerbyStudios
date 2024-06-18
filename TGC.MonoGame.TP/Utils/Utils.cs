@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using TGC.MonoGame.Samples.Collisions;
 using NumericVector3 = System.Numerics.Vector3;
 
@@ -84,12 +85,13 @@ namespace TGC.MonoGame.TP
 
             return vertices.ToArray();
         }
-        public static  void AddModelRandomPosition(Model model, Effect effect, float scale, Simulation simulation, int lenght, List<GameModel> gameModels)
+        public static List<GameModel> AddModelRandomPosition(Model model, Effect effect, float scale, Simulation simulation, int lenght, List<GameModel> gameModels)
         {
+            List<GameModel> ModelsToAdd = new List<GameModel>();
 
             for (int i = 0; i < lenght; i++)
             {
-                gameModels.Add(new GameModel(
+                ModelsToAdd.Add(new GameModel(
                     model,
                     effect,
                     scale,
@@ -97,7 +99,10 @@ namespace TGC.MonoGame.TP
                     simulation
                 ));
 
+                gameModels.AddRange(ModelsToAdd);
+
             }
+            return ModelsToAdd;
         }
         public static void AddModelRandomPositionWithY(Model model, Effect effect, float scale, Simulation simulation, int lenght, List<GameModel> gameModels , float y)
         {
