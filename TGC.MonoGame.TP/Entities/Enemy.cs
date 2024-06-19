@@ -17,6 +17,8 @@ using TGC.MonoGame.TP.Camaras;
 using static System.Formats.Asn1.AsnWriter;
 using System.Transactions;
 using Quaternion = Microsoft.Xna.Framework.Quaternion;
+using System.Reflection;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace TGC.MonoGame.TP.Entities
 {
@@ -37,7 +39,7 @@ namespace TGC.MonoGame.TP.Entities
         private Quaternion rotationQuaternion;
 
         public Matrix EnemyWorld { get; set; }
-
+        public Vector3 Frent { get; private set; }
         public Model EnemyModel { get; set; }
 
         public Effect EnemyEffect { get; set; }
@@ -53,6 +55,7 @@ namespace TGC.MonoGame.TP.Entities
         public Vector3 PosDirection { get; private set; }
         public Matrix EnemyOBBPosition { get; private set; }
         public Matrix EnemyOBBWorld { get; private set; }
+        public Matrix rotation { get; private set; }
 
         public bool Activated;
 
@@ -64,6 +67,9 @@ namespace TGC.MonoGame.TP.Entities
         public Enemy(Vector3 initialPos)
         {
             Position = initialPos;
+            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) *  Matrix.CreateTranslation(initialPos);
+            Frent = Vector3.Normalize(EnemyWorld.Forward);
+
         }
 
         public void LoadContent(ContentManager Content, Simulation simulation)
@@ -102,70 +108,49 @@ namespace TGC.MonoGame.TP.Entities
             Quaternion rot;
             Vector3 translation;
 
-            // Asume que tienes un handle de la simulación y de los cuerpos
             var bodyReference = simulation.Bodies.GetBodyReference(EnemyHandle);
             bodyReference.Awake = true;
 
-            // Calcula la dirección hacia la que debe moverse el auto enemigo para alcanzar al objetivo
-            Vector3 direction = Vector3.Normalize(MainCar.Position - Position);
+            Vector3 enemyFrent = Vector3.Normalize(new Vector3(Frent.X, 0, Frent.Z));
+            Vector3 directionToMainCar = Vector3.Normalize(new Vector3(MainCar.Position.X - Position.X, 0, MainCar.Position.Z - Position.Z));
 
-            // Fuerza de aceleración
-            float acceleration = 0.5f;
-            Vector3 force = direction * acceleration;
-       
-            // Aplica la fuerza al auto enemigo
+            float acceleration = 0.2f;
+            Vector3 force = directionToMainCar * acceleration;
+
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
-            bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, force.Y, force.Z));
+            bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, 0, force.Z));
 
+            float diffX = directionToMainCar.X - enemyFrent.X; //diferencias en X entre vectores
+            float diffZ = directionToMainCar.Z - enemyFrent.Z; //diferencias en z entre vectores
 
-            rotationQuaternion = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathHelper.ToRadians(180));
-            // Rotación deseada para el auto enemigo
-            Matrix rotationMatrix = Matrix.CreateLookAt(Vector3.Zero, direction, Vector3.Up);
-            Quaternion targetRotation = Quaternion.CreateFromRotationMatrix(rotationMatrix ) * rotationQuaternion;
+            float angle = (float)Math.Atan2(diffZ, diffX); //arco tangente de las diferencias en Radianes
+            bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle * 2 , 0));
 
-            // Calcula el torque necesario para girar el auto enemigo hacia la rotación deseada
-            //Quaternion currentRotation = bodyReference.Pose.Orientation;
-            //Quaternion rotationDifference = targetRotation * Quaternion.Conjugate(currentRotation);
-            //Vector3 angularVelocityChange;
-            //float angle;
-            //Utils.ToAxisAngle(rotationDifference, out angularVelocityChange, out angle);
+            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(-MathHelper.PiOver2) * Matrix.CreateRotationY(-angle * 5 ) * Matrix.CreateTranslation(Position);
 
-            //// Asegura que el ángulo sea el más pequeño posible
-            //if (angle > MathHelper.Pi)
-            //    angle -= MathHelper.TwoPi;
-
-            //Vector3 torque = angularVelocityChange * angle * 1f; // Constante de ajuste para la velocidad de rotación
-
-            //// Aplica el torque al auto enemigo
-            //bodyReference.ApplyAngularImpulse(new NumericVector3(0, torque.Y, 0));
-
-            // Simula el frenado si está cerca del objetivo
-            float distanceToTarget = Vector3.Distance(MainCar.Position, Position);
-            if (distanceToTarget < 7f)
-            {
-                // Aplica una fuerza negativa para frenar
-                bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 1.5f);
-            }
-
-            // Actualiza la posición y la orientación del enemigo en el mundo
-            Position = new Vector3(bodyReference.Pose.Position.X, bodyReference.Pose.Position.Y, bodyReference.Pose.Position.Z);
-            //currentRotation = bodyReference.Pose.Orientation;
-
-            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateFromQuaternion(rotationQuaternion /** currentRotation*/) * Matrix.CreateTranslation(Position);
-
+            Position += Vector3.Normalize(EnemyWorld.Left) * 18 * (float)gameTime.ElapsedGameTime.TotalSeconds;
             // Descomponer la matriz del mundo del enemigo para obtener la escala, la rotación y la traslación
-            EnemyWorld.Decompose(out  scale, out  rot, out  translation);
+            EnemyWorld.Decompose(out scale, out rot, out translation);
+
+            bodyReference.Pose.Position = new NumericVector3(Position.X, Position.Y, Position.Z);
+            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X, rot.Y, rot.Z, rot.W);
 
             // Actualiza la orientación y la posición del OBB (Oriented Bounding Box) del enemigo
             EnemyOBB.Orientation = Matrix.CreateFromQuaternion(rot);
-            EnemyOBBPosition = Matrix.CreateTranslation(translation);
-            EnemyOBB.Center = translation;
+            EnemyOBBPosition = Matrix.CreateTranslation(Position);
+            EnemyOBB.Center = Position;
 
             // Actualiza la matriz del mundo del OBB del enemigo
             EnemyOBBWorld = Matrix.CreateScale(EnemyOBB.Extents) *
                             EnemyOBB.Orientation *
                             EnemyOBBPosition;
 
+            //float distanceToTarget = Vector3.Distance(MainCar.Position, Position);
+            //if (distanceToTarget < 7f)
+            //{
+            //    // Aplica una fuerza negativa para frenar
+            //    bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 1.5f);
+            //}
 
         }
 

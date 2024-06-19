@@ -157,8 +157,6 @@ namespace TGC.MonoTP
 
         }
 
-    
-
         public void UnloadContent()
         {
         }
