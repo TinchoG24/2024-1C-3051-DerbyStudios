@@ -61,22 +61,21 @@ namespace TGC.MonoGame.TP.Entities
 
         private int ArenaWidth = 200;
         private int ArenaHeight = 200;
+        float friction = 0.68f;
+
 
         private Random _random = new Random();
 
         public Enemy(Vector3 initialPos)
         {
             Position = initialPos;
-            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) *  Matrix.CreateTranslation(initialPos);
+            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(initialPos);
             Frent = Vector3.Normalize(EnemyWorld.Forward);
 
         }
 
         public void LoadContent(ContentManager Content, Simulation simulation)
         {
-            Vector3 scale;
-            Quaternion rot;
-            Vector3 translation;
 
             EnemyEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
@@ -111,34 +110,39 @@ namespace TGC.MonoGame.TP.Entities
             var bodyReference = simulation.Bodies.GetBodyReference(EnemyHandle);
             bodyReference.Awake = true;
 
-            Vector3 enemyFrent = Vector3.Normalize(new Vector3(Frent.X, 0, Frent.Z));
-            Vector3 directionToMainCar = Vector3.Normalize(new Vector3(MainCar.Position.X - Position.X, 0, MainCar.Position.Z - Position.Z));
+            NumericVector3 enemyFrent = NumericVector3.Normalize(new NumericVector3(Frent.X, 0, Frent.Z));
+            NumericVector3 directionToMainCar = NumericVector3.Normalize(Utils.ToNumericVector3(MainCar.Position - Position));
 
-            float acceleration = 0.2f;
-            Vector3 force = directionToMainCar * acceleration;
+            var force = directionToMainCar * 0.2f;
 
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, 0, force.Z));
 
             float diffX = directionToMainCar.X - enemyFrent.X; //diferencias en X entre vectores
             float diffZ = directionToMainCar.Z - enemyFrent.Z; //diferencias en z entre vectores
-
             float angle = (float)Math.Atan2(diffZ, diffX); //arco tangente de las diferencias en Radianes
-            bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle * 2 , 0));
 
-            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(-MathHelper.PiOver2) * Matrix.CreateRotationY(-angle * 5 ) * Matrix.CreateTranslation(Position);
+            if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
+            bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle, 0));
 
-            Position += Vector3.Normalize(EnemyWorld.Left) * 18 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            bodyReference.Pose.Position += Utils.ToNumericVector3(Vector3.Normalize(EnemyWorld.Left)) * 2 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            Position = bodyReference.Pose.Position;
+
+
+            EnemyWorld = Matrix.CreateScale(0.05f) *
+                Matrix.CreateRotationY(-MathHelper.Pi) *
+                Matrix.CreateRotationY(-angle * 2) *
+                Matrix.CreateTranslation(Position);
+
             // Descomponer la matriz del mundo del enemigo para obtener la escala, la rotación y la traslación
             EnemyWorld.Decompose(out scale, out rot, out translation);
 
-            bodyReference.Pose.Position = new NumericVector3(Position.X, Position.Y, Position.Z);
-            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X, rot.Y, rot.Z, rot.W);
+            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X,rot.Y,rot.Z,rot.W);
 
             // Actualiza la orientación y la posición del OBB (Oriented Bounding Box) del enemigo
             EnemyOBB.Orientation = Matrix.CreateFromQuaternion(rot);
-            EnemyOBBPosition = Matrix.CreateTranslation(Position);
-            EnemyOBB.Center = Position;
+            EnemyOBBPosition = Matrix.CreateTranslation(translation);
+            EnemyOBB.Center = translation;
 
             // Actualiza la matriz del mundo del OBB del enemigo
             EnemyOBBWorld = Matrix.CreateScale(EnemyOBB.Extents) *
