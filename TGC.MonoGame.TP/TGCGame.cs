@@ -633,7 +633,7 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, BoundingFrustum, BoundingBoxMissile, MissileEffect);
+                    missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, MissileEffect);
                     Gizmos.DrawCube(missile.OBBWorld, Color.DarkBlue);
                 }
 
@@ -644,7 +644,7 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, BoundingFrustum, BoundingBoxBullet, MissileEffect);
+                    missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, MissileEffect);
                     Gizmos.DrawCube(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.OBBWorld, Color.DarkBlue);
                 }
 
