@@ -128,7 +128,6 @@ namespace TGC.MonoGame.TP.Entities
             bodyReference.Pose.Position += Utils.ToNumericVector3(Vector3.Normalize(EnemyWorld.Left)) * 2 * (float)gameTime.ElapsedGameTime.TotalSeconds;
             Position = bodyReference.Pose.Position;
 
-
             EnemyWorld = Matrix.CreateScale(0.05f) *
                 Matrix.CreateRotationY(-MathHelper.Pi) *
                 Matrix.CreateRotationY(-angle * 2) *

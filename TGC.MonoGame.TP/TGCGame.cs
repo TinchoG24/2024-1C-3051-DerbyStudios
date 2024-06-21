@@ -141,14 +141,17 @@ namespace TGC.MonoGame.TP
         private SoundEffect Explosion { get; set; }
 
         //Misiles
-        private SpherePrimitive Sphere { get; set; }
-        private List<float> Radii { get; set; }
-        private List<BodyHandle> SphereHandles { get; set; }
         private List<Missile> Missiles { get; set; }
-        private List<Matrix> SpheresWorld { get; set; }
         private bool CanShoot { get; set; }
-        private Model MissileModel { get; set; }
-        public Model Bullet { get; private set; }
+        private Effect MissileEffect { get; set; }
+        public Model MissileModel { get; set; }
+        public Model BulletModel { get; private set; }
+        public Texture2D MissileTexture { get; set; }
+        public Texture2D BulletTexture { get; private set; }
+
+        public BoundingBox BoundingBoxMissile { get; set; }
+        public BoundingBox BoundingBoxBullet { get; set; }
+
 
         private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
         private StaticCamera EnvironmentMapCamera { get; set; }
@@ -235,12 +238,12 @@ namespace TGC.MonoGame.TP
                 new Star(new Vector3(-30 ,5 ,30)),
                 new Star(new Vector3(-30 ,5 ,-30))
            };
+
             //Bullets y Misiles 
-            SpheresWorld = new List<Matrix>();
             Missiles = new List<Missile>();
-            Radii = new List<float>();
-            SphereHandles = new List<BodyHandle>();
-            Sphere = new SpherePrimitive(GraphicsDevice);
+
+
+
 
             //Enemies
             Enemy = new Enemy(new Vector3(-50, 0, 50));
@@ -337,9 +340,17 @@ namespace TGC.MonoGame.TP
             //Array de todos los modelos
             GameModels = GameModelList.ToArray();
 
-            //Load Misiles y bullets
             MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
-            Bullet = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
+
+            BulletModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
+
+            MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+
+            BulletTexture = ((BasicEffect)BulletModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
+
+            MissileTexture = ((BasicEffect)MissileModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
+
+
 
             //Load SoundEffects 
             MissileSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MissileSoundeffect");
@@ -436,12 +447,12 @@ namespace TGC.MonoGame.TP
                 if (MainCar.MachineMissile)
                 {
                     MissileSound.Play();
-                    Missiles.Add(new Missile(Simulation, MainCar));
+                    Missiles.Add(new Missile(Simulation, MainCar, MissileModel, 0.008f));
                 }
                 else
                 {
                     MachineGunSound.Play();
-                    Missiles.Add(new Missile(Simulation, MainCar));
+                    Missiles.Add(new Missile(Simulation, MainCar, BulletModel, 1f));
                 }
 
             }
@@ -474,7 +485,6 @@ namespace TGC.MonoGame.TP
 
             BoundingFrustum.Matrix = FollowCamera.View * FollowCamera.Projection;
 
-
             var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), MainCar.Pose.Orientation);
             Effect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
             Effect.Parameters["forwardDir"].SetValue(forwardDirection);
@@ -484,7 +494,6 @@ namespace TGC.MonoGame.TP
             TilingEffect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
             EnvironmentMapEffect.Parameters["eyePosition"]?.SetValue(FollowCamera.Position);
 
-            SpheresWorld.Clear();
             var quaternionCar = MainCar.quaternion;
 
             var missilesToDelete = new List<Missile>();
@@ -545,8 +554,7 @@ namespace TGC.MonoGame.TP
 
             //MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            HUD.Update(gameTime, MainCar.Health, MainCar.Oil , MainCar.Stars);
-
+            HUD.Update(gameTime, MainCar.Health, MainCar.Oil, MainCar.Stars);
 
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
@@ -601,7 +609,6 @@ namespace TGC.MonoGame.TP
                     EnvironmentMapEffect.Parameters["environmentMap"].SetValue(EnvironmentMapRenderTarget);
                     MainCar.Draw(FollowCamera.View, FollowCamera.Projection);
 
-
                     break;
 
                 case ST_GAME_OVER:
@@ -616,7 +623,6 @@ namespace TGC.MonoGame.TP
         private void drawMainScene(GameTime gameTime)
         {
             Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
-
             Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
             Array.ForEach(Stars, star => star.Draw(FollowCamera, gameTime, BoundingFrustum, star.BoundingSphere));
             Array.ForEach(HealthPacks, pack => pack.Draw(FollowCamera, gameTime, BoundingFrustum, pack.BoundingSphere));
@@ -627,8 +633,8 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    MissileModel.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
-                    //Gizmos.DrawCube (missile.World , Color.DarkBlue);
+                    missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, BoundingFrustum, BoundingBoxMissile, MissileEffect);
+                    Gizmos.DrawCube(missile.OBBWorld, Color.DarkBlue);
                 }
 
             }
@@ -638,8 +644,8 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    Bullet.Draw(missile.World, FollowCamera.View, FollowCamera.Projection);
-                    Gizmos.DrawCube(Matrix.CreateScale(2) * missile.World, Color.DarkBlue);
+                    missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, BoundingFrustum, BoundingBoxBullet, MissileEffect);
+                    Gizmos.DrawCube(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.OBBWorld, Color.DarkBlue);
                 }
 
             }
@@ -673,17 +679,18 @@ namespace TGC.MonoGame.TP
             });
 
             Array.ForEach(GameModels, GameModel =>
-        {
-            if (GameModel.Touch)
-                Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
-            else
-                Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
-        });
+            {
+                if (GameModel.Touch)
+                    Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
+                else
+                    Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
+            });
 
 
             Gizmos.DrawCube(CarOBBWorld, Color.Red);
 
             Enemy.Draw(FollowCamera, gameTime);
+
             Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
 
             DrawFloor(FloorQuad);
