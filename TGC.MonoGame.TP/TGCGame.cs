@@ -598,15 +598,11 @@ namespace TGC.MonoGame.TP
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
 
-        public void dibujarAutoDeportivo(Matrix view, Matrix projection, Effect effect, Model modelo,Matrix matrizMundo, float time)
+        public void DrawCarsInMenu(Matrix view, Matrix projection, Effect effect, Model modelo,Matrix matrizMundo, float time)
         {
-            
-
             effect.Parameters["View"].SetValue(view);
             effect.Parameters["Projection"].SetValue(projection);
-
             relativeMatrices = new Matrix[CarModelMenu.Bones.Count];
-
 
             int index = 0;
             foreach (var mesh in CarModelMenu.Meshes)
@@ -650,8 +646,8 @@ namespace TGC.MonoGame.TP
                     GraphicsDevice.DepthStencilState = DepthStencilState.Default;
                     HUD.DrawMenu(gameTime);
                     posAutoMenu += time ;
-                    dibujarAutoDeportivo(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-250, -100, posAutoMenu)) , time);
-                    dibujarAutoDeportivo(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-50, -100, posAutoMenu)) , time);
+                    DrawCarsInMenu(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-250, -100, posAutoMenu)) , time);
+                    DrawCarsInMenu(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-50, -100, posAutoMenu)) , time);
                        
                     break;
 
