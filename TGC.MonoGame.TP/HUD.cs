@@ -161,10 +161,10 @@ namespace TGC.MonoTP
                 DrawCenterTextY(" L O S E ", 520f, 1 , Color.YellowGreen , SpriteFontPlus);
 
             if (Stars == 10)
-                DrawCenterText(" W I N ", 1f, SpriteFontPlus);
+                DrawCenterTextY(" W I N ", 520f, 1, Color.YellowGreen, SpriteFontPlus);
 
             if (Seconds == 150)
-                DrawCenterText(" T I M E ", 1f, SpriteFontPlus);
+                DrawCenterTextY(" T I M E  ", 520f, 1, Color.YellowGreen, SpriteFontPlus);
 
         }
 
