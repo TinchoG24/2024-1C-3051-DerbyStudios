@@ -23,6 +23,9 @@ namespace TGC.MonoTP
         public const string ContentFolderTextures = "Textures/";
 
         private SpriteFont SpriteFont;
+
+        public SpriteFont SpriteFontPlus { get; private set; }
+
         private SpriteBatch SpriteBatch;
         private Texture2D texture;
 
@@ -75,21 +78,14 @@ namespace TGC.MonoTP
             SpriteBatch.Draw(hudImage, position, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
             SpriteBatch.End();
 
-            DrawCar();
-
-            DrawCenterTextY("DERBY GAMES", 100, 5, Color.Black);
-            DrawCenterTextY("CONTROLES -  WASD", 250, 1, Color.Black);
-            DrawCenterTextY("SALTO - SPACE", 300, 1, Color.Black);
-            DrawCenterTextY("SHOOT - Z", 350, 1, Color.Black);
-            DrawCenterTextY("CLAXON - B", 400, 1, Color.Black);
-            DrawCenterTextY("RESTART - R", 450, 1, Color.Black);
-            DrawCenterTextY("GOD MODE  -  G", 500, 1, Color.Black);
-            DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black);
-        }
-
-        public void DrawCar()
-        {
-
+            DrawCenterTextY("DERBY GAMES", 100, 1, Color.Black, SpriteFontPlus);
+            DrawCenterTextY("CONTROLES -  WASD", 250, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("SALTO - SPACE", 300, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("SHOOT - Z", 350, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("CLAXON - B", 400, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("RESTART - R", 450, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("GOD MODE  -  G", 500, 1, Color.Black, SpriteFont);
+            DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black , SpriteFont);
         }
 
         public void DrawInGameHUD(GameTime gameTime)
@@ -98,22 +94,22 @@ namespace TGC.MonoTP
             SpriteBatch.Begin();
 
             SpriteBatch.DrawString(SpriteFont, "HEALTH", new Vector2(10, 10), Color.YellowGreen);
-            DrawHealthBar(new Vector2(150, 10), currentHealth / maxHealth);
-            SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 10), Color.Black);
+            DrawHealthBar(new Vector2(120, 15), currentHealth / maxHealth);
+            SpriteBatch.DrawString(SpriteFont, currentHealth.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(120, 10), Color.Black);
 
-            SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 30), Color.YellowGreen);
-            DrawOilBar(new Vector2(150, 30), currentOil / maxOil);
-            SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(160, 30), Color.Black);
+            SpriteBatch.DrawString(SpriteFont, "O I L", new Vector2(10, 40), Color.YellowGreen);
+            DrawOilBar(new Vector2(120, 50), currentOil / maxOil);
+            SpriteBatch.DrawString(SpriteFont, currentOil.ToString("F1", CultureInfo.InvariantCulture) + "%", new Vector2(120, 40), Color.Black);
 
             SpriteBatch.End();
 
-            DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10", 25f, 1, Color.YellowGreen);
+            DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10", 25f, 1, Color.YellowGreen , SpriteFont);
 
             if (currentHealth == 0)
-                DrawCenterText(" L O S E ", 5f);
+                DrawCenterText(" L O S E ", 1f , SpriteFontPlus);
 
             if (Stars == 3)
-                DrawCenterText(" W I N ", 5f);
+                DrawCenterText(" W I N ", 1f , SpriteFontPlus);
 
 
 
@@ -159,8 +155,8 @@ namespace TGC.MonoTP
 
         public void LoadContent()
         {
-            SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "CascadiaCodePL");
             SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalic");
+            SpriteFontPlus = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalicPlus");
             hudImage = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista");
 
         }
@@ -169,7 +165,7 @@ namespace TGC.MonoTP
         {
         }
 
-        public void DrawCenterText(string msg, float escala)
+        public void DrawCenterText(string msg, float escala , SpriteFont SpriteFont)
         {
             var W = GraphicsDevice.Viewport.Width;
             var H = GraphicsDevice.Viewport.Height;
@@ -180,7 +176,7 @@ namespace TGC.MonoTP
             SpriteBatch.End();
         }
 
-        public void DrawCenterTextY(string msg, float Y, float escala, Color color)
+        public void DrawCenterTextY(string msg, float Y, float escala, Color color, SpriteFont SpriteFont)
         {
             var W = GraphicsDevice.Viewport.Width;
             var H = GraphicsDevice.Viewport.Height;
@@ -232,7 +228,7 @@ namespace TGC.MonoTP
 
         public void GameOver()
         {
-            DrawCenterText("GAME OVER", 5);
+            DrawCenterText("GAME OVER", 1 , SpriteFontPlus);
 
         }
     }
