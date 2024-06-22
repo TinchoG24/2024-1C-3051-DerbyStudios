@@ -267,7 +267,7 @@ namespace TGC.MonoGame.TP
                 new HealthPack(new Vector3(95 ,3 ,-95)),
                 new HealthPack(new Vector3(-95 ,3 ,95)),
                 new HealthPack(new Vector3(-95 ,3 ,-95)),
-                
+
                 new HealthPack(new Vector3(135 ,3 ,-135)),
                 new HealthPack(new Vector3(-135 ,3 ,135)),
                 new HealthPack(new Vector3(-135 ,3 ,-135))
@@ -363,10 +363,10 @@ namespace TGC.MonoGame.TP
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, new Vector3(50, 10, 50), Simulation));
             Gasoline = new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation);
             GameModelList.Add(Gasoline);
-            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "ramp/RampNew"), Effect, 1f, new Vector3(90, 0, 50), Simulation));
-            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZNew"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
@@ -639,19 +639,23 @@ namespace TGC.MonoGame.TP
                     if (Enemy.EnemyOBB.Intersects(missile.OBBox))
                     {
                         addEnemy = true;
-                        count ++;
+                        count++;
                     }
                 }
             }
 
-            if (addEnemy && count>120) { 
-                Enemies.Add(new Enemy(new Vector3(100, 0, 100) ,EnemyModel, Effect , Simulation , EnemyTexture));
+            if (addEnemy && count > 120)
+            {
+                Enemies.Add(new Enemy(new Vector3(100, 0, 100), EnemyModel, Effect, Simulation, EnemyTexture));
                 addEnemy = false;
                 count = 0;
             }
 
             MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
             MainCar.Health = MathHelper.Clamp(MainCar.Health, 0, 100);
+
+            if (MainCar.Oil == 0 || MainCar.Health == 0 || MainCar.Stars == 10)
+                gameState = ST_GAME_OVER;
 
             HUD.Update(gameTime, MainCar.Health, MainCar.Oil, MainCar.Stars);
 
@@ -712,7 +716,7 @@ namespace TGC.MonoGame.TP
                     break;
 
                 case ST_STAGE_2:
-                    GraphicsDevice.Clear(Color.Beige);
+                    GraphicsDevice.Clear(Color.Black);
 
                     // Environment map passes
                     GraphicsDevice.DepthStencilState = DepthStencilState.Default;
@@ -750,7 +754,11 @@ namespace TGC.MonoGame.TP
                     break;
 
                 case ST_GAME_OVER:
+
+                    GraphicsDevice.Clear(Color.Beige);
+
                     HUD.GameOver();
+
                     break;
             }
 
@@ -843,7 +851,7 @@ namespace TGC.MonoGame.TP
             //Gizmos.Draw();
             //#endregion
 
-          
+
         }
 
         private void DrawFloor(QuadPrimitive geometry)

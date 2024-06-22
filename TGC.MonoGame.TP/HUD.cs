@@ -14,7 +14,6 @@ namespace TGC.MonoTP
 {
     public class HUD
     {
-
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
         public const string ContentFolderMusic = "Music/";
@@ -22,27 +21,30 @@ namespace TGC.MonoTP
         public const string ContentFolderSpriteFonts = "SpriteFonts/";
         public const string ContentFolderTextures = "Textures/";
 
-        private SpriteFont SpriteFont;
-
+        //Sprites
+        private SpriteFont SpriteFont {  get; set; }
         public SpriteFont SpriteFontPlus { get; private set; }
+        private SpriteBatch SpriteBatch {  get; set; }
 
-        private SpriteBatch SpriteBatch;
-        private Texture2D texture;
+        //Textures
+        private Texture2D HudTexture { get; set; }
+        private Texture2D GameOverTexture { get; set; }
+        private Texture2D HealthBarTexture {  get; set; }
+        private Texture2D OilBarTexture { get; set; }
 
-        Texture2D healthBarTexture;
-        float currentHealth = 100f;
-        float maxHealth = 100f;
-
-        Texture2D OilBarTexture;
-        float currentOil = 100f;
 
         public int Stars { get; private set; }
+        private Vector2 Position { get; set; }
+        private float Scale { get; set; }
+        public int Seconds { get; private set; }
 
+
+        float currentHealth = 100f;
+        float maxHealth = 100f;
+        float currentOil = 100f;
         float maxOil = 100f;
 
-        private Vector2 position { get; set; }
-        private Texture2D hudImage { get; set; }
-        private float scale { get; set; }
+
         private GraphicsDevice GraphicsDevice;
         private ContentManager Content;
 
@@ -50,32 +52,69 @@ namespace TGC.MonoTP
         {
             this.Content = content;
             this.GraphicsDevice = graphicsDevice;
-            healthBarTexture = CreateRectangleTexture(GraphicsDevice, 200, 20, Color.Red);
+            HealthBarTexture = CreateRectangleTexture(GraphicsDevice, 200, 20, Color.Red);
             OilBarTexture = CreateRectangleTexture(GraphicsDevice, 200, 20, Color.Blue);
 
         }
 
+        public void Initialize()
+        {
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
+        }
+
+        public void LoadContent()
+        {
+            SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalic");
+            SpriteFontPlus = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalicPlus");
+            HudTexture = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista");
+            GameOverTexture = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista2");
+        }
+        
+        private void PrepareHud(Texture2D texture2D)
+        {
+            float screenWidth = GraphicsDevice.Viewport.Width;
+            float screenHeight = GraphicsDevice.Viewport.Height;
+            float imageWidth = texture2D.Width;
+            float imageHeight = texture2D.Height;
+
+            float screenAspectRatio = screenWidth / screenHeight;
+            float imageAspectRatio = imageWidth / imageHeight;
+
+            if (screenAspectRatio > imageAspectRatio)
+            {
+                // Screen is wider than the image
+                Scale = screenHeight / imageHeight;
+            }
+            else
+            {
+                // Screen is taller than the image
+                Scale = screenWidth / imageWidth;
+            }
+
+            // Calculate the position to center the image
+            float scaledWidth = imageWidth * Scale;
+            float scaledHeight = imageHeight * Scale;
+            Position = new Vector2(
+                (screenWidth - scaledWidth) / 2,
+                (screenHeight - scaledHeight) / 2
+            );
+        }
+        
         public void Update(GameTime gameTime, float health, float oil, int stars)
         {
             this.currentHealth = health;
             this.currentOil = oil;
             this.Stars = stars;
-
             currentHealth = MathHelper.Clamp(currentHealth, 0, maxHealth);
             currentOil = MathHelper.Clamp(currentOil, 0, maxOil);
-
         }
 
         public void DrawMenu(GameTime gameTime)
         {
-            //GraphicsDevice.Clear(Color.Black);
-            //SpriteBatch.Begin();
-            //SpriteBatch.DrawString(SpriteFont, "DERBY GAMES", new Vector2(300, 500), Color.White);
-            //SpriteBatch.End();
             GraphicsDevice.Clear(Color.Black);
-            PrepareHud();
+            PrepareHud(HudTexture);
             SpriteBatch.Begin();
-            SpriteBatch.Draw(hudImage, position, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            SpriteBatch.Draw(HudTexture, Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
             SpriteBatch.End();
 
             DrawCenterTextY("DERBY GAMES", 100, 1, Color.Black, SpriteFontPlus);
@@ -105,64 +144,28 @@ namespace TGC.MonoTP
 
             DrawCenterTextY("Stars: " + Stars.ToString() + "/ 10", 25f, 1, Color.YellowGreen , SpriteFont);
 
-            if (currentHealth == 0)
-                DrawCenterText(" L O S E ", 1f , SpriteFontPlus);
+            Seconds = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
 
-            if (Stars == 3)
-                DrawCenterText(" W I N ", 1f , SpriteFontPlus);
-
-
-
-            var secs = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
-
-            DrawRightText("Tiempo: " + secs.ToString(), 25f, 1);
+            DrawRightText("Tiempo: " + Seconds.ToString(), 25f, 1);
         }
 
-        private void PrepareHud()
+        public void GameOver()
         {
-            float screenWidth = GraphicsDevice.Viewport.Width;
-            float screenHeight = GraphicsDevice.Viewport.Height;
-            float imageWidth = hudImage.Width;
-            float imageHeight = hudImage.Height;
+            //DrawCenterText("GAME OVER", 1 , SpriteFontPlus);
+            PrepareHud(GameOverTexture);
+            SpriteBatch.Begin();
+            SpriteBatch.Draw(GameOverTexture, Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
+            SpriteBatch.End();
 
-            float screenAspectRatio = screenWidth / screenHeight;
-            float imageAspectRatio = imageWidth / imageHeight;
+            if (currentHealth == 0 || currentOil == 0)
+                DrawCenterTextY(" L O S E ", 520f, 1 , Color.YellowGreen , SpriteFontPlus);
 
-            if (screenAspectRatio > imageAspectRatio)
-            {
-                // Screen is wider than the image
-                scale = screenHeight / imageHeight;
-            }
-            else
-            {
-                // Screen is taller than the image
-                scale = screenWidth / imageWidth;
-            }
+            if (Stars == 10)
+                DrawCenterText(" W I N ", 1f, SpriteFontPlus);
 
-            // Calculate the position to center the image
-            float scaledWidth = imageWidth * scale;
-            float scaledHeight = imageHeight * scale;
-            position = new Vector2(
-                (screenWidth - scaledWidth) / 2,
-                (screenHeight - scaledHeight) / 2
-            );
-        }
+            if (Seconds == 150)
+                DrawCenterText(" T I M E ", 1f, SpriteFontPlus);
 
-        public void Initialize()
-        {
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
-        }
-
-        public void LoadContent()
-        {
-            SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalic");
-            SpriteFontPlus = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalicPlus");
-            hudImage = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista");
-
-        }
-
-        public void UnloadContent()
-        {
         }
 
         public void DrawCenterText(string msg, float escala , SpriteFont SpriteFont)
@@ -175,7 +178,7 @@ namespace TGC.MonoTP
             SpriteBatch.DrawString(SpriteFont, msg, new Vector2(0, 0), Color.YellowGreen);
             SpriteBatch.End();
         }
-
+        
         public void DrawCenterTextY(string msg, float Y, float escala, Color color, SpriteFont SpriteFont)
         {
             var W = GraphicsDevice.Viewport.Width;
@@ -197,14 +200,16 @@ namespace TGC.MonoTP
             SpriteBatch.DrawString(SpriteFont, msg, new Vector2(0, 0), Color.YellowGreen);
             SpriteBatch.End();
         }
+        
         private void DrawHealthBar(Vector2 position, float healthPercentage)
         {
-            int barWidth = (int)(healthBarTexture.Width * healthPercentage);
-            Rectangle sourceRectangle = new Rectangle(0, 0, barWidth, healthBarTexture.Height);
-            Rectangle destinationRectangle = new Rectangle((int)position.X, (int)position.Y, barWidth, healthBarTexture.Height);
+            int barWidth = (int)(HealthBarTexture.Width * healthPercentage);
+            Rectangle sourceRectangle = new Rectangle(0, 0, barWidth, HealthBarTexture.Height);
+            Rectangle destinationRectangle = new Rectangle((int)position.X, (int)position.Y, barWidth, HealthBarTexture.Height);
 
-            SpriteBatch.Draw(healthBarTexture, destinationRectangle, sourceRectangle, Color.White);
+            SpriteBatch.Draw(HealthBarTexture, destinationRectangle, sourceRectangle, Color.White);
         }
+        
         private void DrawOilBar(Vector2 position, float OilPorcentage)
         {
             int barWidth = (int)(OilBarTexture.Width * OilPorcentage);
@@ -226,10 +231,8 @@ namespace TGC.MonoTP
             return texture;
         }
 
-        public void GameOver()
+        public void UnloadContent()
         {
-            DrawCenterText("GAME OVER", 1 , SpriteFontPlus);
-
         }
     }
 
