@@ -33,6 +33,7 @@ using System.Security.Claims;
 using System.Reflection.Metadata.Ecma335;
 using BepuPhysics.Trees;
 using System.Reflection.Metadata;
+using System.Threading;
 
 namespace TGC.MonoGame.TP
 {
@@ -149,16 +150,16 @@ namespace TGC.MonoGame.TP
         public Texture2D MissileTexture { get; set; }
         public Texture2D BulletTexture { get; private set; }
 
-        public BoundingBox BoundingBoxMissile { get; set; }
-        public BoundingBox BoundingBoxBullet { get; set; }
-
-
+        //EnviromentMAP
         private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
         private StaticCamera EnvironmentMapCamera { get; set; }
 
         //Enemy
-        private Enemy Enemy { get; set; }
-        public RenderTarget2D MainSceneRenderTarget { get; private set; }
+        private List<Enemy> Enemies { get; set; }
+        public Model EnemyModel { get; private set; }
+
+        public List<Texture2D> EnemyTexture = new List<Texture2D>();
+
 
         //HUD 
         HUD HUD { get; set; }
@@ -170,6 +171,7 @@ namespace TGC.MonoGame.TP
         public Matrix Projection { get; private set; }
         public Model CarModelMenu { get; private set; }
         public Matrix[] relativeMatrices { get; private set; }
+
         private ModelBone leftBackWheelBone;
         private ModelBone rightBackWheelBone;
         private ModelBone leftFrontWheelBone;
@@ -178,14 +180,15 @@ namespace TGC.MonoGame.TP
         private Matrix rightBackWheelTransform = Matrix.Identity;
         private Matrix leftFrontWheelTransform = Matrix.Identity;
         private Matrix rightFrontWheelTransform = Matrix.Identity;
-
         public List<Texture2D> ModelTextures = new List<Texture2D>();
-
-        // Cámara
         private Vector3 posicionCamara = new Vector3(-200, 100, 0);
         private float posAutoMenu = -350;
-        private float time = 0;
         private float currentHealth;
+
+
+        private float time = 0;
+        private bool addEnemy;
+        private int count = 0;
 
 
         /// <summary>
@@ -197,10 +200,6 @@ namespace TGC.MonoGame.TP
             Vector3 scale;
             Quaternion rot;
             Vector3 translation;
-
-            MainSceneRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
-        GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
-        RenderTargetUsage.DiscardContents);
 
             //HUD
             HUD = new HUD(Content, GraphicsDevice);
@@ -242,33 +241,54 @@ namespace TGC.MonoGame.TP
             // PowerUps
             PowerUps = new PowerUp[]
             {
-                new VelocityPowerUp(new Vector3(-20,2,-20)),
-                new MissilePowerUp(new Vector3(20,2,-20)),
-                new MachineGunPowerUp(new Vector3(-20,2,20))
+                new VelocityPowerUp(new Vector3(-10,2,-10)),
+                new MissilePowerUp(new Vector3(10,2,-10)),
+                new MachineGunPowerUp(new Vector3(-10,2,10)),
+
+                new VelocityPowerUp(new Vector3(-60,2,-60)),
+                new MissilePowerUp(new Vector3(60,2,-60)),
+                new MachineGunPowerUp(new Vector3(-60,2,60)),
+
+                new VelocityPowerUp(new Vector3(-110,2,-110)),
+                new MissilePowerUp(new Vector3(110,2,-110)),
+                new MachineGunPowerUp(new Vector3(-110,2,110)),
+
+                new VelocityPowerUp(new Vector3(-170,2,-170)),
+                new MissilePowerUp(new Vector3(170,2,-170)),
+                new MachineGunPowerUp(new Vector3(-170,2,170))
             };
 
             HealthPacks = new PowerUp[]
             {
-                new HealthPack(new Vector3(10 ,3 ,-10)),
-                new HealthPack(new Vector3(-10 ,3 ,10)),
-                new HealthPack(new Vector3(-10 ,3 ,-10))
+                new HealthPack(new Vector3(35 ,3 ,-35)),
+                new HealthPack(new Vector3(-35 ,3 ,35)),
+                new HealthPack(new Vector3(-35 ,3 ,-35)),
+
+                new HealthPack(new Vector3(95 ,3 ,-95)),
+                new HealthPack(new Vector3(-95 ,3 ,95)),
+                new HealthPack(new Vector3(-95 ,3 ,-95)),
+                
+                new HealthPack(new Vector3(135 ,3 ,-135)),
+                new HealthPack(new Vector3(-135 ,3 ,135)),
+                new HealthPack(new Vector3(-135 ,3 ,-135))
             };
 
             Stars = new PowerUp[]
            {
-                new Star(new Vector3(30 ,5 ,-30)),
-                new Star(new Vector3(-30 ,5 ,30)),
-                new Star(new Vector3(-30 ,5 ,-30))
+                new Star(new Vector3(0 ,5 ,10)),
+                new Star(new Vector3(-37 ,5 ,28)),
+                new Star(new Vector3(-57 ,5 ,-98)),
+                new Star(new Vector3(-52 ,5 ,48)),
+                new Star(new Vector3(152 ,5 ,28)),
+                new Star(new Vector3(-12 ,5 ,28)),
+                new Star(new Vector3(-189 ,5 ,-28)),
+                new Star(new Vector3(189 ,5 ,-128)),
+                new Star(new Vector3(109 ,5 ,-66)),
+                new Star(new Vector3(-129 ,5 ,-196)),
            };
 
             //Bullets y Misiles 
             Missiles = new List<Missile>();
-
-
-
-
-            //Enemies
-            Enemy = new Enemy(new Vector3(-50, 0, 50));
 
             EnvironmentMapRenderTarget = new RenderTargetCube(GraphicsDevice, 2048, false,
                 SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.DiscardContents);
@@ -343,23 +363,22 @@ namespace TGC.MonoGame.TP
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, new Vector3(50, 10, 50), Simulation));
             Gasoline = new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation);
             GameModelList.Add(Gasoline);
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "ramp/RampNew"), Effect, 1f, new Vector3(90, 0, 50), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZNew"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
 
             //Load Models posicion variable
-            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 10, GameModelList, 10f);
+            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 6, GameModelList, 10f);
             Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation, 15, GameModelList);
             Gasolines = Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 15, GameModelList);
             Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation, 30, GameModelList);
 
             Gasolines.Add(Gasoline);
 
-            //Array de todos los modelos
             GameModels = GameModelList.ToArray();
 
             MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
@@ -372,24 +391,24 @@ namespace TGC.MonoGame.TP
 
             MissileTexture = ((BasicEffect)MissileModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
 
-            CarModelMenu = Content.Load<Model>(ContentFolder3D + "CarsMenu/RacingCar");
+            LoadCarModelMenu();
 
-            foreach (var mesh in CarModelMenu.Meshes)
+            EnemyModel = Content.Load<Model>(ContentFolder3D + "weapons/Vehicle");
+
+            foreach (var mesh in EnemyModel.Meshes)
             {
                 foreach (var meshPart in mesh.MeshParts)
                 {
-                    ModelTextures.Add(((BasicEffect)meshPart.Effect)?.Texture);
+                    EnemyTexture.Add(((BasicEffect)meshPart.Effect)?.Texture);
                 }
             }
-            leftBackWheelBone = CarModelMenu.Bones["WheelD"];
-            rightBackWheelBone = CarModelMenu.Bones["WheelC"];
-            leftFrontWheelBone = CarModelMenu.Bones["WheelA"];
-            rightFrontWheelBone = CarModelMenu.Bones["WheelB"];
 
-            leftBackWheelTransform = leftBackWheelBone.Transform;
-            rightBackWheelTransform = rightBackWheelBone.Transform;
-            leftFrontWheelTransform = leftFrontWheelBone.Transform;
-            rightFrontWheelTransform = rightFrontWheelBone.Transform;
+            //Enemies
+            Enemies = new List<Enemy>() {
+
+                new Enemy(new Vector3(-50, 0, 50) , EnemyModel , Effect , Simulation , EnemyTexture)
+
+            };
 
             //Load SoundEffects 
             MissileSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MissileSoundeffect");
@@ -397,10 +416,14 @@ namespace TGC.MonoGame.TP
             Claxon = Content.Load<SoundEffect>(ContentFolderSoundEffects + "Bocina");
             Explosion = Content.Load<SoundEffect>(ContentFolderSoundEffects + "ExplosionSoundEffect");
 
-            //Load Enemy
-            Enemy.LoadContent(Content, Simulation);
-
             // Add walls
+            LoadWalls();
+
+            base.LoadContent();
+        }
+
+        private void LoadWalls()
+        {
             WallWorlds.Add(Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(200f, 0f, 0f));
             WallWorlds.Add(Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-200f, 0f, 0f));
             WallWorlds.Add(Matrix.CreateRotationY(Convert.ToSingle(Math.PI / 2)) * Matrix.CreateTranslation(0f, 0f, 200f));
@@ -433,8 +456,28 @@ namespace TGC.MonoGame.TP
                 Simulation.Shapes.Add(planeShape)
             );
             Simulation.Statics.Add(planeDescription);
+        }
 
-            base.LoadContent();
+        private void LoadCarModelMenu()
+        {
+            CarModelMenu = Content.Load<Model>(ContentFolder3D + "CarsMenu/RacingCar");
+
+            foreach (var mesh in CarModelMenu.Meshes)
+            {
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    ModelTextures.Add(((BasicEffect)meshPart.Effect)?.Texture);
+                }
+            }
+            leftBackWheelBone = CarModelMenu.Bones["WheelD"];
+            rightBackWheelBone = CarModelMenu.Bones["WheelC"];
+            leftFrontWheelBone = CarModelMenu.Bones["WheelA"];
+            rightFrontWheelBone = CarModelMenu.Bones["WheelB"];
+
+            leftBackWheelTransform = leftBackWheelBone.Transform;
+            rightBackWheelTransform = rightBackWheelBone.Transform;
+            leftFrontWheelTransform = leftFrontWheelBone.Transform;
+            rightFrontWheelTransform = rightFrontWheelBone.Transform;
         }
 
         /// <summary>
@@ -444,8 +487,6 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
-
-
             switch (gameState)
             {
                 case ST_STAGE_1:
@@ -577,10 +618,13 @@ namespace TGC.MonoGame.TP
 
             });
 
-            Enemy.Update(MainCar, gameTime, Simulation);
+            foreach (var Enemy in Enemies)
+                Enemy.Update(MainCar, gameTime, Simulation);
 
-            if (CarBox.Intersects(Enemy.EnemyOBB))
-                MainCar.Health -= 0.2f;
+
+            foreach (var Enemy in Enemies)
+                if (CarBox.Intersects(Enemy.EnemyOBB))
+                    MainCar.Health -= 0.2f;
 
             MainCar.Oil -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -588,17 +632,33 @@ namespace TGC.MonoGame.TP
                 if (CarBox.Intersects(oilBox.BoundingBox))
                     MainCar.Oil += 0.2f;
 
+            foreach (var Enemy in Enemies)
+            {
+                foreach (Missile missile in Missiles)
+                {
+                    if (Enemy.EnemyOBB.Intersects(missile.OBBox))
+                    {
+                        addEnemy = true;
+                        count ++;
+                    }
+                }
+            }
+
+            if (addEnemy && count>120) { 
+                Enemies.Add(new Enemy(new Vector3(100, 0, 100) ,EnemyModel, Effect , Simulation , EnemyTexture));
+                addEnemy = false;
+                count = 0;
+            }
+
             MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
             MainCar.Health = MathHelper.Clamp(MainCar.Health, 0, 100);
 
-            //MainCar.Health -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
             HUD.Update(gameTime, MainCar.Health, MainCar.Oil, MainCar.Stars);
 
-            Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
+            //Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
 
-        public void DrawCarsInMenu(Matrix view, Matrix projection, Effect effect, Model modelo,Matrix matrizMundo, float time)
+        public void DrawCarsInMenu(Matrix view, Matrix projection, Effect effect, Model modelo, Matrix matrizMundo, float time)
         {
             effect.Parameters["View"].SetValue(view);
             effect.Parameters["Projection"].SetValue(projection);
@@ -645,10 +705,10 @@ namespace TGC.MonoGame.TP
                     GraphicsDevice.Clear(Color.LightYellow);
                     GraphicsDevice.DepthStencilState = DepthStencilState.Default;
                     HUD.DrawMenu(gameTime);
-                    posAutoMenu += time ;
-                    DrawCarsInMenu(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-250, -100, posAutoMenu)) , time);
-                    DrawCarsInMenu(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-50, -100, posAutoMenu)) , time);
-                       
+                    posAutoMenu += time;
+                    DrawCarsInMenu(View, Projection, Effect, CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-250, -100, posAutoMenu)), time);
+                    DrawCarsInMenu(View, Projection, Effect, CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-50, -100, posAutoMenu)), time);
+
                     break;
 
                 case ST_STAGE_2:
@@ -712,7 +772,7 @@ namespace TGC.MonoGame.TP
                 {
                     missileWorlds.Add(missile.World);
                     missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, MissileEffect);
-                    Gizmos.DrawCube(missile.OBBWorld, Color.DarkBlue);
+                    //Gizmos.DrawCube(missile.OBBWorld, Color.DarkBlue);
                 }
 
             }
@@ -723,62 +783,67 @@ namespace TGC.MonoGame.TP
                 {
                     missileWorlds.Add(missile.World);
                     missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, MissileEffect);
-                    Gizmos.DrawCube(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.OBBWorld, Color.DarkBlue);
+                    //Gizmos.DrawCube(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.OBBWorld, Color.DarkBlue);
                 }
 
             }
-
-            Array.ForEach(PowerUps, PowerUp =>
-            {
-                var r = PowerUp.BoundingSphere.Radius;
-                if (PowerUp.Touch)
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
-                else
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
-
-            });
-            Array.ForEach(Stars, PowerUp =>
-            {
-                var r = PowerUp.BoundingSphere.Radius;
-                if (PowerUp.Touch)
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
-                else
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
-
-            });
-            Array.ForEach(HealthPacks, PowerUp =>
-            {
-                var r = PowerUp.BoundingSphere.Radius;
-                if (PowerUp.Touch)
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
-                else
-                    Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
-
-            });
-
-            Array.ForEach(GameModels, GameModel =>
-            {
-                if (GameModel.Touch)
-                    Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
-                else
-                    Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
-            });
-
-
-            Gizmos.DrawCube(CarOBBWorld, Color.Red);
-
-            Enemy.Draw(FollowCamera, gameTime);
-
-            Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
+            foreach (var Enemy in Enemies)
+                Enemy.Draw(FollowCamera, gameTime);
 
             DrawFloor(FloorQuad);
             DrawWalls();
-
             //MainCar.Draw();
 
-            Gizmos.Draw();
-
             HUD.DrawInGameHUD(gameTime);
+
+            //#region DrawGizmos
+            //Array.ForEach(PowerUps, PowerUp =>
+            //{
+            //    var r = PowerUp.BoundingSphere.Radius;
+            //    if (PowerUp.Touch)
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+            //    else
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            //});
+            //Array.ForEach(Stars, PowerUp =>
+            //{
+            //    var r = PowerUp.BoundingSphere.Radius;
+            //    if (PowerUp.Touch)
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+            //    else
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            //});
+            //Array.ForEach(HealthPacks, PowerUp =>
+            //{
+            //    var r = PowerUp.BoundingSphere.Radius;
+            //    if (PowerUp.Touch)
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.CornflowerBlue);
+            //    else
+            //        Gizmos.DrawSphere(PowerUp.BoundingSphere.Center, new Vector3(r, r, r), Color.Red);
+
+            //});
+
+            //Array.ForEach(GameModels, GameModel =>
+            //{
+            //    if (GameModel.Touch)
+            //        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.CornflowerBlue);
+            //    else
+            //        Gizmos.DrawCube((GameModel.BoundingBox.Max + GameModel.BoundingBox.Min) / 2f, GameModel.BoundingBox.Max - GameModel.BoundingBox.Min, Color.Red);
+            //});
+
+
+            //Gizmos.DrawCube(CarOBBWorld, Color.Red);
+
+
+            //foreach (var Enemy in Enemies)
+            //    Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
+
+            //Gizmos.Draw();
+            //#endregion
+
+          
         }
 
         private void DrawFloor(QuadPrimitive geometry)

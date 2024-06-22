@@ -19,6 +19,8 @@ using System.Transactions;
 using Quaternion = Microsoft.Xna.Framework.Quaternion;
 using System.Reflection;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
+using System.Reflection.Metadata;
+using BepuPhysics.Trees;
 
 namespace TGC.MonoGame.TP.Entities
 {
@@ -44,7 +46,7 @@ namespace TGC.MonoGame.TP.Entities
 
         public Effect EnemyEffect { get; set; }
 
-        public Texture EnemyTexture { get; set; }
+        public List<Texture2D> EnemyTexture = new List<Texture2D>();
 
         public BodyHandle EnemyHandle { get; private set; }
 
@@ -66,22 +68,21 @@ namespace TGC.MonoGame.TP.Entities
 
         private Random _random = new Random();
 
-        public Enemy(Vector3 initialPos)
+        public Enemy(Vector3 initialPos , Model model , Effect effect , Simulation simulation , List<Texture2D> EnemyTextures)
         {
             Position = initialPos;
+           
             EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(initialPos);
+            
             Frent = Vector3.Normalize(EnemyWorld.Forward);
 
-        }
+            EnemyEffect = effect;
 
-        public void LoadContent(ContentManager Content, Simulation simulation)
-        {
+            EnemyModel = model;
 
-            EnemyEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EnemyTexture = EnemyTextures;
 
-            EnemyModel = Content.Load<Model>(ContentFolder3D + "weapons/Vehicle");
-
-            EnemyTexture = ((BasicEffect)EnemyModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
+            
 
             var temporaryCubeAABB = BoundingVolumesExtensions.CreateAABBFrom(EnemyModel);
             temporaryCubeAABB = BoundingVolumesExtensions.Scale(temporaryCubeAABB, 0.001f);
@@ -98,6 +99,7 @@ namespace TGC.MonoGame.TP.Entities
                   simulation.Shapes,
                   EnemyBox
                 ));
+
 
         }
 
@@ -187,24 +189,28 @@ namespace TGC.MonoGame.TP.Entities
 
         public void Draw(FollowCamera Camera, GameTime gameTime)
         {
-
-            time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
-            EnemyEffect.Parameters["View"].SetValue(Camera.View);
-            EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
-            EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture);
-            EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
-
-            var mesh = EnemyModel.Meshes.FirstOrDefault();
-            if (mesh != null)
+            for (int i = 0; i < EnemyModel.Meshes.Count; i++)
             {
-                foreach (var part in mesh.MeshParts)
-                {
-                    part.Effect = EnemyEffect;
-                }
+                var mesh = EnemyModel.Meshes[i];
+                var texture = EnemyTexture[i];
 
-                mesh.Draw();
+
+                time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+
+                EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
+                EnemyEffect.Parameters["View"].SetValue(Camera.View);
+                EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
+                EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture[i]);
+                EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
+
+                
+                    foreach (var part in mesh.MeshParts)
+                    {
+                        part.Effect = EnemyEffect;
+                    }
+
+                    mesh.Draw();
+                
             }
         }
 
