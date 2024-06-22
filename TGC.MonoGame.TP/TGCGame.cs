@@ -158,6 +158,7 @@ namespace TGC.MonoGame.TP
 
         //Enemy
         private Enemy Enemy { get; set; }
+        public RenderTarget2D MainSceneRenderTarget { get; private set; }
 
         //HUD 
         HUD HUD { get; set; }
@@ -165,7 +166,24 @@ namespace TGC.MonoGame.TP
         public SoundEffect soundEffect { get; private set; }
         public GameModel Gasoline { get; private set; }
         public List<GameModel> Gasolines { get; private set; }
+        public Matrix View { get; private set; }
+        public Matrix Projection { get; private set; }
+        public Model CarModelMenu { get; private set; }
+        public Matrix[] relativeMatrices { get; private set; }
+        private ModelBone leftBackWheelBone;
+        private ModelBone rightBackWheelBone;
+        private ModelBone leftFrontWheelBone;
+        private ModelBone rightFrontWheelBone;
+        private Matrix leftBackWheelTransform = Matrix.Identity;
+        private Matrix rightBackWheelTransform = Matrix.Identity;
+        private Matrix leftFrontWheelTransform = Matrix.Identity;
+        private Matrix rightFrontWheelTransform = Matrix.Identity;
 
+        public List<Texture2D> ModelTextures = new List<Texture2D>();
+
+        // Cámara
+        private Vector3 posicionCamara = new Vector3(-200, 100, 0);
+        private float posAutoMenu = -350;
         private float time = 0;
         private float currentHealth;
 
@@ -180,6 +198,10 @@ namespace TGC.MonoGame.TP
             Quaternion rot;
             Vector3 translation;
 
+            MainSceneRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+        GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
+        RenderTargetUsage.DiscardContents);
+
             //HUD
             HUD = new HUD(Content, GraphicsDevice);
             HUD.Initialize();
@@ -190,9 +212,9 @@ namespace TGC.MonoGame.TP
             // Apago el backface culling.
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
             // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
-            // var rasterizerState = new RasterizerState();
-            // rasterizerState.CullMode = CullMode.None;
-            // GraphicsDevice.RasterizerState = rasterizerState;
+            var rasterizerState = new RasterizerState();
+            rasterizerState.CullMode = CullMode.None;
+            GraphicsDevice.RasterizerState = rasterizerState;
 
             // Camara para seguir al auto principal
             FollowCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
@@ -350,7 +372,24 @@ namespace TGC.MonoGame.TP
 
             MissileTexture = ((BasicEffect)MissileModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
 
+            CarModelMenu = Content.Load<Model>(ContentFolder3D + "CarsMenu/RacingCar");
 
+            foreach (var mesh in CarModelMenu.Meshes)
+            {
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    ModelTextures.Add(((BasicEffect)meshPart.Effect)?.Texture);
+                }
+            }
+            leftBackWheelBone = CarModelMenu.Bones["WheelD"];
+            rightBackWheelBone = CarModelMenu.Bones["WheelC"];
+            leftFrontWheelBone = CarModelMenu.Bones["WheelA"];
+            rightFrontWheelBone = CarModelMenu.Bones["WheelB"];
+
+            leftBackWheelTransform = leftBackWheelBone.Transform;
+            rightBackWheelTransform = rightBackWheelBone.Transform;
+            leftFrontWheelTransform = leftFrontWheelBone.Transform;
+            rightFrontWheelTransform = rightFrontWheelBone.Transform;
 
             //Load SoundEffects 
             MissileSound = Content.Load<SoundEffect>(ContentFolderSoundEffects + "MissileSoundeffect");
@@ -559,6 +598,40 @@ namespace TGC.MonoGame.TP
             Gizmos.UpdateViewProjection(FollowCamera.View, FollowCamera.Projection);
         }
 
+        public void dibujarAutoDeportivo(Matrix view, Matrix projection, Effect effect, Model modelo,Matrix matrizMundo, float time)
+        {
+            
+
+            effect.Parameters["View"].SetValue(view);
+            effect.Parameters["Projection"].SetValue(projection);
+
+            relativeMatrices = new Matrix[CarModelMenu.Bones.Count];
+
+
+            int index = 0;
+            foreach (var mesh in CarModelMenu.Meshes)
+            {
+                rightFrontWheelBone.Transform = Matrix.CreateRotationX(time) * Matrix.CreateRotationY(0) * rightFrontWheelTransform;
+                leftFrontWheelBone.Transform = Matrix.CreateRotationX(time) * Matrix.CreateRotationY(0) * leftFrontWheelTransform;
+                leftBackWheelBone.Transform = Matrix.CreateRotationX(time) * leftBackWheelTransform;
+                rightBackWheelBone.Transform = Matrix.CreateRotationX(time) * rightBackWheelTransform;
+                CarModelMenu.CopyAbsoluteBoneTransformsTo(relativeMatrices);
+
+                effect.Parameters["World"].SetValue(relativeMatrices[mesh.ParentBone.Index] * matrizMundo);
+
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    effect.GraphicsDevice.SetVertexBuffer(meshPart.VertexBuffer);
+                    effect.GraphicsDevice.Indices = meshPart.IndexBuffer;
+                    effect.Parameters["ModelTexture"]?.SetValue(ModelTextures[index]);
+                    meshPart.Effect = effect;
+
+                }
+                mesh.Draw();
+                index++;
+            }
+        }
+
         /// <summary>
         ///     Se llama cada vez que hay que refrescar la pantalla.
         ///     Escribir aqui el codigo referido al renderizado.
@@ -566,11 +639,20 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            View = Matrix.CreateLookAt(posicionCamara, Vector3.Zero, Vector3.Up);
+            Projection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -80, 1000);
 
             switch (gameState)
             {
                 case ST_STAGE_1:
+                    var Time = (float)gameTime.TotalGameTime.TotalSeconds;
+                    GraphicsDevice.Clear(Color.LightYellow);
+                    GraphicsDevice.DepthStencilState = DepthStencilState.Default;
                     HUD.DrawMenu(gameTime);
+                    posAutoMenu += time ;
+                    dibujarAutoDeportivo(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-250, -100, posAutoMenu)) , time);
+                    dibujarAutoDeportivo(View, Projection,Effect , CarModel, Matrix.CreateScale(0.32f) * Matrix.CreateTranslation(new Vector3(-50, -100, posAutoMenu)) , time);
+                       
                     break;
 
                 case ST_STAGE_2:
@@ -596,9 +678,9 @@ namespace TGC.MonoGame.TP
                     }
 
                     GraphicsDevice.SetRenderTarget(null);
+
                     Effect.Parameters["View"].SetValue(FollowCamera.View);
                     Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
-
                     EffectNoTextures.Parameters["View"].SetValue(FollowCamera.View);
                     EffectNoTextures.Parameters["Projection"].SetValue(FollowCamera.Projection);
 

@@ -74,6 +74,9 @@ namespace TGC.MonoTP
             SpriteBatch.Begin();
             SpriteBatch.Draw(hudImage, position, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
             SpriteBatch.End();
+
+            DrawCar();
+
             DrawCenterTextY("DERBY GAMES", 100, 5, Color.Black);
             DrawCenterTextY("CONTROLES -  WASD", 250, 1, Color.Black);
             DrawCenterTextY("SALTO - SPACE", 300, 1, Color.Black);
@@ -82,6 +85,11 @@ namespace TGC.MonoTP
             DrawCenterTextY("RESTART - R", 450, 1, Color.Black);
             DrawCenterTextY("GOD MODE  -  G", 500, 1, Color.Black);
             DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black);
+        }
+
+        public void DrawCar()
+        {
+
         }
 
         public void DrawInGameHUD(GameTime gameTime)
@@ -153,7 +161,7 @@ namespace TGC.MonoTP
         {
             SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "CascadiaCodePL");
             SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "CarCrash");
-            hudImage = Content.Load<Texture2D>(ContentFolder3D + "HUD/HUD1");
+            hudImage = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista");
 
         }
 
