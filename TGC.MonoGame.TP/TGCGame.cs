@@ -51,6 +51,7 @@ namespace TGC.MonoGame.TP
         public const string ContentFolderSpriteFonts = "SpriteFonts/";
         public const string ContentFolderTextures = "Textures/";
         public const string ContentFolderSoundEffects = "SoundEffects/";
+        public const string ContentFolderSoundSongs = "SoundSongs/";
 
         public const float ViewDistance = 20f;
         public const float Offset = 10f;
@@ -165,13 +166,18 @@ namespace TGC.MonoGame.TP
         HUD HUD { get; set; }
         public Song backgroundMusic { get; private set; }
         public SoundEffect soundEffect { get; private set; }
+        public SoundEffect GameOverSoundEffect { get; private set; }
+        public SoundEffect SongWin { get; private set; }
+        public SoundEffect SongOil { get; private set; }
         public GameModel Gasoline { get; private set; }
         public List<GameModel> Gasolines { get; private set; }
         public Matrix View { get; private set; }
         public Matrix Projection { get; private set; }
         public Model CarModelMenu { get; private set; }
         public Matrix[] relativeMatrices { get; private set; }
+        public SoundEffect ChooseSoundEffect { get; private set; }
 
+        //Dibujar Autos de menu
         private ModelBone leftBackWheelBone;
         private ModelBone rightBackWheelBone;
         private ModelBone leftFrontWheelBone;
@@ -189,6 +195,11 @@ namespace TGC.MonoGame.TP
         private float time = 0;
         private bool addEnemy;
         private int count = 0;
+        private Matrix rotationCar;
+        private bool ChargeOil = false;
+        private bool activeSound  =false;
+        private bool activeGodMode = false;
+        private bool previousGKeyState=false ;
 
 
         /// <summary>
@@ -299,7 +310,6 @@ namespace TGC.MonoGame.TP
             base.Initialize();
         }
 
-
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
         ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
@@ -307,8 +317,12 @@ namespace TGC.MonoGame.TP
         protected override void LoadContent()
         {
             HUD.LoadContent();
+
             backgroundMusic = Content.Load<Song>(ContentFolder3D + "HUD/SoundTrack");
             soundEffect = Content.Load<SoundEffect>(ContentFolder3D + "HUD/SoundEffect");
+            GameOverSoundEffect = Content.Load<SoundEffect>(ContentFolderSoundEffects + "GameOverSoundEffect");
+            SongWin = Content.Load<SoundEffect>(ContentFolderSoundEffects + "SongWin");
+            SongOil = Content.Load<SoundEffect>(ContentFolderSoundEffects + "SongOil");
 
             MediaPlayer.Play(backgroundMusic);
             MediaPlayer.Volume = 0.2f;
@@ -515,7 +529,6 @@ namespace TGC.MonoGame.TP
             Vector3 scale;
             Quaternion rot;
             Vector3 translation;
-
             Vector3 forwardLocal = new Vector3(0, 0, -1);
 
             var keyboardState = Keyboard.GetState();
@@ -542,6 +555,18 @@ namespace TGC.MonoGame.TP
 
             if (keyboardState.IsKeyDown(Keys.B))
                 Claxon.Play();
+
+            if (keyboardState.IsKeyDown(Keys.G) && !previousGKeyState)
+            {
+                activeGodMode = !activeGodMode;
+            }
+            previousGKeyState = keyboardState.IsKeyDown(Keys.G);
+
+            if (activeGodMode)
+            {
+                MainCar.Health = 100;
+                MainCar.Oil = 100;
+            }
 
             CarSimulation.Update();
 
@@ -590,7 +615,6 @@ namespace TGC.MonoGame.TP
                 Missiles.Remove(missileToDelete);
 
                 Explosion.Play();
-
             }
 
             MainCar.World.Decompose(out scale, out rot, out translation);
@@ -620,7 +644,6 @@ namespace TGC.MonoGame.TP
 
             foreach (var Enemy in Enemies)
                 Enemy.Update(MainCar, gameTime, Simulation);
-
 
             foreach (var Enemy in Enemies)
                 if (CarBox.Intersects(Enemy.EnemyOBB))
@@ -654,8 +677,15 @@ namespace TGC.MonoGame.TP
             MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
             MainCar.Health = MathHelper.Clamp(MainCar.Health, 0, 100);
 
-            if (MainCar.Oil == 0 || MainCar.Health == 0 || MainCar.Stars == 10)
+            if (MainCar.Oil == 0 || MainCar.Health == 0 || MainCar.Stars == 10 || HUD.Seconds >= 150)
                 gameState = ST_GAME_OVER;
+
+            if (MainCar.Oil == 0 || MainCar.Health == 0)
+                ChooseSoundEffect = GameOverSoundEffect;
+            else if (MainCar.Stars == 10)
+                ChooseSoundEffect = SongWin;
+            else if (HUD.Seconds >= 150)
+                ChooseSoundEffect = GameOverSoundEffect;
 
             HUD.Update(gameTime, MainCar.Health, MainCar.Oil, MainCar.Stars);
 
@@ -754,10 +784,35 @@ namespace TGC.MonoGame.TP
                     break;
 
                 case ST_GAME_OVER:
+                    MediaPlayer.Stop();
 
-                    GraphicsDevice.Clear(Color.Beige);
+                    GraphicsDevice.Clear(Color.Black);
 
-                    HUD.GameOver();
+                    // Posición fija de la cámara para ver el auto entrando
+                    Vector3 posicionCamara = new Vector3(-100, 0, -800);  // Cámara más cerca y más baja
+                    Vector3 posicionCamara2 = new Vector3(100, 0, -800);  // Cámara más cerca y más baja
+                    Matrix view = Matrix.CreateLookAt(posicionCamara, new Vector3(0, 0, 0), Vector3.Up);
+                    Matrix view2 = Matrix.CreateLookAt(posicionCamara2, new Vector3(0, 0, 0), Vector3.Up);
+
+                    // Proyección de la cámara
+                    Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 400f, 2100f);
+
+                    // Actualiza la posición del auto en el eje Z
+                    posAutoMenu += 3;  // Factor de velocidad ajustado para mejor visibilidad
+
+                    // Matriz de rotación y transformación del auto
+                    Matrix rotationCar = Matrix.Identity;  // Puedes añadir rotaciones si lo deseas
+                    Matrix world = Matrix.CreateScale(0.32f) * rotationCar * Matrix.CreateTranslation(new Vector3(250, -200, posAutoMenu));
+                    Matrix world2 = Matrix.CreateScale(0.32f) * rotationCar * Matrix.CreateTranslation(new Vector3(-150, -200, posAutoMenu));
+
+                    // Mostrar el HUD de Game Over
+                    HUD.GameOver(ChooseSoundEffect);
+
+                    // Dibuja el auto
+                    DrawCarsInMenu(view, projection, Effect, CarModel, world, time);
+                    DrawCarsInMenu(view2, projection, Effect, CarModel, world2, time);
+
+
 
                     break;
             }
@@ -800,11 +855,10 @@ namespace TGC.MonoGame.TP
 
             DrawFloor(FloorQuad);
             DrawWalls();
-            //MainCar.Draw();
 
             HUD.DrawInGameHUD(gameTime);
 
-            //#region DrawGizmos
+            #region DrawGizmos
             //Array.ForEach(PowerUps, PowerUp =>
             //{
             //    var r = PowerUp.BoundingSphere.Radius;
@@ -849,7 +903,7 @@ namespace TGC.MonoGame.TP
             //    Gizmos.DrawCube(Enemy.EnemyOBBWorld, Color.LightGoldenrodYellow);
 
             //Gizmos.Draw();
-            //#endregion
+            #endregion
 
 
         }

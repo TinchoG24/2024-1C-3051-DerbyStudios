@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -47,6 +48,7 @@ namespace TGC.MonoTP
 
         private GraphicsDevice GraphicsDevice;
         private ContentManager Content;
+        private bool activeSound = false;
 
         public HUD(ContentManager content, GraphicsDevice graphicsDevice)
         {
@@ -149,7 +151,7 @@ namespace TGC.MonoTP
             DrawRightText("Tiempo: " + Seconds.ToString(), 25f, 1);
         }
 
-        public void GameOver()
+        public void GameOver(SoundEffect soundEffect)
         {
             //DrawCenterText("GAME OVER", 1 , SpriteFontPlus);
             PrepareHud(GameOverTexture);
@@ -157,14 +159,20 @@ namespace TGC.MonoTP
             SpriteBatch.Draw(GameOverTexture, Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
             SpriteBatch.End();
 
+            if (!activeSound)
+            {
+                soundEffect.Play();
+                activeSound = true;
+            }
+
             if (currentHealth == 0 || currentOil == 0)
-                DrawCenterTextY(" L O S E ", 520f, 1 , Color.YellowGreen , SpriteFontPlus);
+                DrawCenterTextY("GAME OVER", 520f, 1 , Color.YellowGreen , SpriteFontPlus);
 
             if (Stars == 10)
-                DrawCenterTextY(" W I N ", 520f, 1, Color.YellowGreen, SpriteFontPlus);
+                DrawCenterTextY("V I C TO R Y", 520f, 1, Color.YellowGreen, SpriteFontPlus);
 
             if (Seconds == 150)
-                DrawCenterTextY(" T I M E  ", 520f, 1, Color.YellowGreen, SpriteFontPlus);
+                DrawCenterTextY(" T I M E ", 520f, 1, Color.YellowGreen, SpriteFontPlus);
 
         }
 
