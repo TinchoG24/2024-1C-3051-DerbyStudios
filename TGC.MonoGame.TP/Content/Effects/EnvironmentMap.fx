@@ -7,8 +7,9 @@
 #define PS_SHADERMODEL ps_4_0_level_9_1
 #endif
 
-float4x4 WorldViewProjection;
 float4x4 World;
+float4x4 View;
+float4x4 Projection;
 float4x4 InverseTransposeWorld;
 
 float3 eyePosition;
@@ -54,8 +55,10 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 {
     VertexShaderOutput output = (VertexShaderOutput) 0;
 
-	output.Position = mul(input.Position, WorldViewProjection);
-	output.WorldPosition = mul(input.Position, World);
+    float4 worldPosition = mul(input.Position, World);
+	output.WorldPosition = worldPosition;
+    float4 viewPosition = mul(worldPosition, View);
+	output.Position = mul(viewPosition, Projection);
     output.Normal = mul(float4(normalize(input.Normal.xyz), 1.0), InverseTransposeWorld);
     output.TextureCoordinates = input.TextureCoordinates;
 	
@@ -84,18 +87,11 @@ float4 EnvironmentMapPS(VertexShaderOutput input) : COLOR
 }
 
 
-
-VertexShaderOutput SphereVS(in VertexShaderInput input)
+float4 NoColorPS(VertexShaderOutput input) : COLOR
 {
-    VertexShaderOutput output = (VertexShaderOutput) 0;
-
-    output.Position = mul(input.Position, WorldViewProjection);
-    output.WorldPosition = mul(input.Position, World);
-    output.Normal = mul(float4(normalize(input.Position.xyz), 1.0), InverseTransposeWorld);
-    output.TextureCoordinates = input.TextureCoordinates;
-	
-    return output;
+    return float4(0, 0, 0, 1);
 }
+
 
 
 technique EnvironmentMap
@@ -107,13 +103,11 @@ technique EnvironmentMap
     }
 };
 
-
-
-technique EnvironmentMapSphere
+technique NoColor
 {
     pass Pass0
     {
-        VertexShader = compile VS_SHADERMODEL SphereVS();
-        PixelShader = compile PS_SHADERMODEL EnvironmentMapPS();
+		VertexShader = compile VS_SHADERMODEL MainVS();
+        PixelShader = compile PS_SHADERMODEL NoColorPS();
     }
 };

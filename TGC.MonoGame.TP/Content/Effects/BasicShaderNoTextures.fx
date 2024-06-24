@@ -17,7 +17,7 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-float3 DiffuseColor;
+float3 DiffuseColor = float3(0, 0, 0);
 
 float Time = 0;
 
