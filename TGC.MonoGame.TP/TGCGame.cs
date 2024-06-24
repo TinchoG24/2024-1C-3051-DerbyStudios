@@ -34,6 +34,7 @@ using System.Reflection.Metadata.Ecma335;
 using BepuPhysics.Trees;
 using System.Reflection.Metadata;
 using System.Threading;
+using TGC.MonoGame.Samples.Geometries;
 
 namespace TGC.MonoGame.TP
 {
@@ -125,6 +126,8 @@ namespace TGC.MonoGame.TP
         private Effect EffectNoTextures { get; set; }
         private Effect TilingEffect { get; set; }
         private Effect EnvironmentMapEffect { get; set; }
+        private Effect GaussianBlurEffect { get; set; }
+        private Effect IntegrateEffect { get; set; }
 
 
         //Modelos y PowerUps
@@ -143,7 +146,7 @@ namespace TGC.MonoGame.TP
         //Misiles
         private List<Missile> Missiles { get; set; }
         private bool CanShoot { get; set; }
-        private Effect MissileEffect { get; set; }
+        // private Effect MissileEffect { get; set; }
         public Model MissileModel { get; set; }
         public Model BulletModel { get; private set; }
         public Texture2D MissileTexture { get; set; }
@@ -152,6 +155,12 @@ namespace TGC.MonoGame.TP
         //EnviromentMAP
         private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
         private StaticCamera EnvironmentMapCamera { get; set; }
+
+        // Bloom
+        private RenderTarget2D MainRenderTarget { get; set; }
+        private RenderTarget2D BloomRenderTarget { get; set; }
+        private RenderTarget2D FinalBloomRenderTarget { get; set; }
+        private FullScreenQuad FullScreenQuad { get; set; }
 
         //Enemy
         private List<Enemy> Enemies { get; set; }
@@ -294,6 +303,18 @@ namespace TGC.MonoGame.TP
             EnvironmentMapCamera = new StaticCamera(1f, MainCar.Position, Vector3.UnitX, Vector3.Up);
             EnvironmentMapCamera.BuildProjection(1f, 1f, 3000f, MathHelper.PiOver2);
 
+            MainRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
+                RenderTargetUsage.DiscardContents);
+            BloomRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
+                RenderTargetUsage.DiscardContents);
+            FinalBloomRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.None, 0,
+                RenderTargetUsage.DiscardContents);
+
+            FullScreenQuad = new FullScreenQuad(GraphicsDevice);
+
             base.Initialize();
         }
 
@@ -325,11 +346,15 @@ namespace TGC.MonoGame.TP
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-            EffectTexture = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
-            Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EffectTexture = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             EffectNoTextures = Content.Load<Effect>(ContentFolderEffects + "BasicShaderNoTextures");
+            Effect = EffectTexture;
             TilingEffect = Content.Load<Effect>(ContentFolderEffects + "TextureTiling");
             EnvironmentMapEffect = Content.Load<Effect>(ContentFolderEffects + "EnvironmentMap");
+            GaussianBlurEffect = Content.Load<Effect>(ContentFolderEffects + "GaussianBlur");
+            GaussianBlurEffect.Parameters["screenSize"]
+                .SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            IntegrateEffect = Content.Load<Effect>(ContentFolderEffects + "IntegrateEffects");
 
             Effect.Parameters["ambientColor"].SetValue(new Vector3(0.7f, 0.7f, 0.5f));
             Effect.Parameters["diffuseColor"].SetValue(new Vector3(0.4f, 0.5f, 0.6f));
@@ -386,7 +411,7 @@ namespace TGC.MonoGame.TP
 
             BulletModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
 
-            MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            // MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
             BulletTexture = ((BasicEffect)BulletModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
 
@@ -461,7 +486,7 @@ namespace TGC.MonoGame.TP
 
         private void LoadCarModelMenu()
         {
-            CarModelMenu = Content.Load<Model>(ContentFolder3D + "CarsMenu/RacingCar");
+            CarModelMenu = Content.Load<Model>(ContentFolder3D + "CarsMenu/RacingCarMenu");
 
             foreach (var mesh in CarModelMenu.Meshes)
             {
@@ -746,12 +771,11 @@ namespace TGC.MonoGame.TP
                         drawMainScene(gameTime);
                     }
 
-                    GraphicsDevice.SetRenderTarget(null);
+                    GraphicsDevice.SetRenderTarget(MainRenderTarget);
+                    GraphicsDevice.Clear(Color.Black);
 
-                    Effect.Parameters["View"].SetValue(FollowCamera.View);
-                    Effect.Parameters["Projection"].SetValue(FollowCamera.Projection);
-                    EffectNoTextures.Parameters["View"].SetValue(FollowCamera.View);
-                    EffectNoTextures.Parameters["Projection"].SetValue(FollowCamera.Projection);
+                    EffectTexture.Parameters["View"].SetValue(FollowCamera.View);
+                    EffectTexture.Parameters["Projection"].SetValue(FollowCamera.Projection);
 
                     drawMainScene(gameTime);
 
@@ -759,6 +783,57 @@ namespace TGC.MonoGame.TP
                     EnvironmentMapEffect.CurrentTechnique = EnvironmentMapEffect.Techniques["EnvironmentMap"];
                     EnvironmentMapEffect.Parameters["environmentMap"].SetValue(EnvironmentMapRenderTarget);
                     MainCar.Draw(FollowCamera.View, FollowCamera.Projection);
+
+                    // Start bloom pass (for stars)
+                    GraphicsDevice.SetRenderTarget(BloomRenderTarget);
+                    GraphicsDevice.Clear(Color.Black);
+
+                    EffectNoTextures.Parameters["View"].SetValue(FollowCamera.View);
+                    EffectNoTextures.Parameters["Projection"].SetValue(FollowCamera.Projection);
+                    Effect = EffectNoTextures;
+
+                    Array.ForEach(GameModels, GameModel => {
+                        GameModel.Effect = EffectNoTextures;
+                        GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox);
+                        GameModel.Effect = EffectTexture;
+                    });
+                    EnvironmentMapEffect.CurrentTechnique = EnvironmentMapEffect.Techniques["NoColor"];
+                    MainCar.Draw(FollowCamera.View, FollowCamera.Projection);
+
+                    Array.ForEach(Stars, star => star.Draw(FollowCamera, gameTime, BoundingFrustum, star.BoundingSphere));
+
+                    Effect = EffectTexture; // Devolver al effect que corresponde
+
+                    // Start blur passes
+                    var passCount = 2;
+                    var bloomTexture = BloomRenderTarget;
+                    var finalTarget = FinalBloomRenderTarget;
+                    for (int i = 0; i < passCount; i++) {
+                        GraphicsDevice.SetRenderTarget(finalTarget);
+                        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+
+                        GaussianBlurEffect.Parameters["baseTexture"].SetValue(bloomTexture);
+                        FullScreenQuad.Draw(GaussianBlurEffect);
+
+                        if (i != passCount - 1)
+                        {
+                            var aux = bloomTexture;
+                            bloomTexture = finalTarget;
+                            finalTarget = aux;
+                        }
+                    }
+
+                    // Integrate textures
+                    GraphicsDevice.DepthStencilState = DepthStencilState.None;
+
+                    GraphicsDevice.SetRenderTarget(null);
+                    GraphicsDevice.Clear(Color.Black);
+
+                    IntegrateEffect.Parameters["baseTexture"].SetValue(MainRenderTarget);
+                    IntegrateEffect.Parameters["bloomTexture"].SetValue(finalTarget);
+                    FullScreenQuad.Draw(IntegrateEffect);
+
+                    HUD.DrawInGameHUD(gameTime);
 
                     break;
 
@@ -813,7 +888,7 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, MissileEffect);
+                    missile.Draw(missile.World, MissileModel, MissileTexture, FollowCamera, gameTime, Effect);
                     //Gizmos.DrawCube(missile.OBBWorld, Color.DarkBlue);
                 }
 
@@ -824,7 +899,7 @@ namespace TGC.MonoGame.TP
                 foreach (Missile missile in Missiles)
                 {
                     missileWorlds.Add(missile.World);
-                    missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, MissileEffect);
+                    missile.Draw(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.World, BulletModel, BulletTexture, FollowCamera, gameTime, Effect);
                     //Gizmos.DrawCube(Matrix.CreateRotationY(MathHelper.PiOver2) * missile.OBBWorld, Color.DarkBlue);
                 }
 
@@ -835,7 +910,6 @@ namespace TGC.MonoGame.TP
             DrawFloor(FloorQuad);
             DrawWalls();
 
-            HUD.DrawInGameHUD(gameTime);
 
             #region DrawGizmos
             //Array.ForEach(PowerUps, PowerUp =>
