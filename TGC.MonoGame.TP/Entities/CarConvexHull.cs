@@ -184,7 +184,7 @@ public class CarConvexHull
         if (keyboardState.IsKeyDown(Keys.Space) && bodyReference.Pose.Position.Y <= 2)
         {
             // Aplica un impulso hacia arriba cuando se presiona la tecla de espacio y el objeto est� en el suelo
-            bodyReference.ApplyLinearImpulse(System.Numerics.Vector3.UnitY * 100f * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            bodyReference.ApplyLinearImpulse(System.Numerics.Vector3.UnitY * 200f * (float)gameTime.ElapsedGameTime.TotalSeconds);
 
         }
 

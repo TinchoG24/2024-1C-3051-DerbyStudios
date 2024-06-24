@@ -129,7 +129,7 @@ namespace TGC.MonoTP
             DrawCenterTextY("Presione SPACE para comenzar...", 600, 1, Color.Black , SpriteFont);
         }
 
-        public void DrawInGameHUD(GameTime gameTime)
+        public void DrawInGameHUD(GameTime gameTime , float FPS )
         {
 
             SpriteBatch.Begin();
@@ -149,6 +149,7 @@ namespace TGC.MonoTP
             Seconds = Convert.ToInt32(Math.Floor(gameTime.TotalGameTime.TotalSeconds));
 
             DrawRightText("Tiempo: " + Seconds.ToString(), 25f, 1);
+            DrawRightText("FPS: " + FPS.ToString("F1", CultureInfo.InvariantCulture), 55f, 1);
         }
 
         public void GameOver(SoundEffect soundEffect)

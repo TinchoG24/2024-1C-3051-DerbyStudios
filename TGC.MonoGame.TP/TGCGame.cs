@@ -77,6 +77,9 @@ namespace TGC.MonoGame.TP
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
 
             Graphics.IsFullScreen = true;
+            // Configurar tasa de fotogramas fija
+            IsFixedTimeStep = true;
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0); // 60 FPS
 
             Gizmos = new Gizmos();
 
@@ -211,6 +214,9 @@ namespace TGC.MonoGame.TP
         private bool activeSound = false;
         private bool activeGodMode = false;
         private bool previousGKeyState = false;
+        private float _fps;
+        private int _frameCounter;
+        private double _elapsedTime;
 
 
         /// <summary>
@@ -535,7 +541,7 @@ namespace TGC.MonoGame.TP
                 //Salgo del juego.
                 Exit();
             }
-
+           
             base.Update(gameTime);
         }
 
@@ -841,7 +847,19 @@ namespace TGC.MonoGame.TP
                     IntegrateEffect.Parameters["bloomTexture"].SetValue(finalTarget);
                     FullScreenQuad.Draw(IntegrateEffect);
 
-                    HUD.DrawInGameHUD(gameTime);
+                    // Contador de FPS
+                    _frameCounter++;
+                    _elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
+
+                    if (_elapsedTime >= 1.0)
+                    {
+                        _fps = 1000f / _frameCounter;
+                        _frameCounter = 0;
+                        _elapsedTime -= 1.0;
+                    }
+
+                    HUD.DrawInGameHUD(gameTime, _fps);
+
 
                     break;
 
@@ -874,8 +892,8 @@ namespace TGC.MonoGame.TP
                     DrawCarsInMenu(view, projection, Effect, CarModel, world, time);
                     DrawCarsInMenu(view2, projection, Effect, CarModel, world2, time);
 
-
-
+                  
+                    
                     break;
             }
 
