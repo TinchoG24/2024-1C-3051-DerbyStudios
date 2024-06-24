@@ -415,13 +415,7 @@ namespace TGC.MonoGame.TP
             //Load Misiles y Bullets 
             MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
             BulletModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
-<<<<<<< HEAD
-            MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-=======
 
-            // MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-
->>>>>>> 811f4135161adb506c6ee86db997753ef3d3a2da
             BulletTexture = ((BasicEffect)BulletModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
             MissileTexture = ((BasicEffect)MissileModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
 
