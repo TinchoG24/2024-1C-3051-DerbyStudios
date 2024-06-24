@@ -25,7 +25,5 @@ namespace TGC.MonoGame.TP
 
         public List<Texture2D> ModelTextures = new List<Texture2D>();
 
-        
-
     }
 }

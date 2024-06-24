@@ -34,37 +34,24 @@ namespace TGC.MonoGame.TP.Entities
         public const string ContentFolderTextures = "Textures/";
         public const string ContentFolderSoundEffects = "SoundEffects/";
 
-        public OrientedBoundingBox EnemyOBB { get; set; }
-
-        public Box EnemyBox { get; set; }
-
-        private Quaternion rotationQuaternion;
-
-        public Matrix EnemyWorld { get; set; }
-        public Vector3 Frent { get; private set; }
         public Model EnemyModel { get; set; }
-
         public Effect EnemyEffect { get; set; }
+        public Matrix EnemyWorld { get; set; }
+        public Box EnemyBox { get; set; }
+        public Vector3 Frent { get; private set; }
+        public Vector3 Position { get; set; }
+        public OrientedBoundingBox EnemyOBB { get; set; }
+        public Matrix EnemyOBBPosition { get; private set; }
+        public Matrix EnemyOBBWorld { get; private set; }
+        public BodyHandle EnemyHandle { get; private set; }
 
         public List<Texture2D> EnemyTexture = new List<Texture2D>();
 
-        public BodyHandle EnemyHandle { get; private set; }
-
         private float time { get; set; }
-
-        public Vector3 Position { get; set; }
-
-        public Vector3 PosDirection { get; private set; }
-        public Matrix EnemyOBBPosition { get; private set; }
-        public Matrix EnemyOBBWorld { get; private set; }
-        public Matrix rotation { get; private set; }
-
         public bool Activated;
-
         private int ArenaWidth = 200;
         private int ArenaHeight = 200;
         float friction = 0.68f;
-
 
         private Random _random = new Random();
 
@@ -120,9 +107,10 @@ namespace TGC.MonoGame.TP.Entities
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, 0, force.Z));
 
-            float diffX = directionToMainCar.X - enemyFrent.X; //diferencias en X entre vectores
-            float diffZ = directionToMainCar.Z - enemyFrent.Z; //diferencias en z entre vectores
-            float angle = (float)Math.Atan2(diffZ, diffX); //arco tangente de las diferencias en Radianes
+            float diffX = directionToMainCar.X - enemyFrent.X; 
+            float diffZ = directionToMainCar.Z - enemyFrent.Z; 
+            
+            float angle = (float)Math.Atan2(diffZ, diffX); 
 
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle, 0));
@@ -157,34 +145,6 @@ namespace TGC.MonoGame.TP.Entities
             //    bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 1.5f);
             //}
 
-        }
-
-        public List<Vector3> GenerateRandomPositions(int count, float y)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, y, z));
-            }
-
-            return positions;
-        }
-
-        public List<Vector3> GenerateRandomPositions(int count)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, 0, z));
-            }
-
-            return positions;
         }
 
         public void Draw(FollowCamera Camera, GameTime gameTime)

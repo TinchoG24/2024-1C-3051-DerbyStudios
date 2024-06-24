@@ -77,8 +77,6 @@ public class Missile
 
     }
 
-
-
     public void Draw(Matrix World, Model model, Texture2D texture, FollowCamera Camera, GameTime gameTime, Effect MissileEffect)
     {
         time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
@@ -126,7 +124,6 @@ public class Missile
             var quaternion = pose.Orientation;
 
 
-
             if (body.Velocity.Linear.LengthSquared() < Math.Pow(velocityThreshold, 2))
             {
                 Simulation.Bodies.Remove(Handle);
@@ -163,8 +160,6 @@ public class Missile
             OBBWorld = Matrix.CreateScale(OBBox.Extents) *
                  OBBox.Orientation *
                  Position;
-
-
 
         }
         else

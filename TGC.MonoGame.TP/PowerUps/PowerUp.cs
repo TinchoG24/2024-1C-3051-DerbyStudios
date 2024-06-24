@@ -24,34 +24,19 @@ namespace TGC.MonoGame.TP.PowerUps
         public const string ContentFolderSoundEffects = "SoundEffects/";
 
         public SoundEffect PowerUpSound { get; set; }
-
         public bool Touch { get; set; }
-
-        public bool RandomPositions { get; set; }
-
         public Vector3 Position { get; set; }
 
         public BoundingSphere BoundingSphere;
-
         public Matrix PowerUpWorld { get; set; }
-
         public Model PowerUpModel { get; set; }
-
         public Effect PowerUpEffect { get; set; }
-
         public Texture PowerUpTexture { get; set; }
-
         private float time { get; set; }
-
         private bool GoingUp { get; set; }
-
         private bool GoingDown { get; set; }
 
         public bool Activated;
-
-        private int ArenaWidth = 200;
-        private int ArenaHeight = 200;
-        private Random _random = new Random();
 
         protected PowerUp(Vector3 position)
         {
@@ -74,7 +59,6 @@ namespace TGC.MonoGame.TP.PowerUps
         {
             if (GoingUp)
             {
-                //PowerUpWorld *= Matrix.CreateTranslation(0, 0.2f, 0);
                 if (PowerUpWorld.Translation.Y >= Position.Y + 10f)
                 {
                     GoingUp = false;
@@ -135,21 +119,6 @@ namespace TGC.MonoGame.TP.PowerUps
         }
 
         public abstract void Activate(CarConvexHull carConvexHull);
-
-        public List<Vector3> GenerateRandomPositions(int count)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, 0, z));
-            }
-
-            return positions;
-        }
-
 
     }
 }

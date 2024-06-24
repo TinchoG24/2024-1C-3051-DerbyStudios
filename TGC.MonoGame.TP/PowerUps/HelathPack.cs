@@ -23,7 +23,7 @@ namespace TGC.MonoGame.TP.PowerUps
 
         }
 
-        public override async void Activate(CarConvexHull carConvexHull)
+        public override void Activate(CarConvexHull carConvexHull)
         {
             
             if (!Activated && First)

@@ -74,10 +74,14 @@ namespace TGC.MonoGame.TP
             Graphics = new GraphicsDeviceManager(this);
             Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
+
+            Graphics.IsFullScreen = true;
+
             Gizmos = new Gizmos();
 
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
+
             Content.RootDirectory = "Content";
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
@@ -116,7 +120,7 @@ namespace TGC.MonoGame.TP
         private CarSimulation CarSimulation { get; set; }
         private Simulation Simulation { get; set; }
         public Model CarModel { get; private set; }
-        
+
 
 
         //Efectos 
@@ -195,9 +199,9 @@ namespace TGC.MonoGame.TP
         private int count = 0;
         private Matrix rotationCar;
         private bool ChargeOil = false;
-        private bool activeSound  =false;
+        private bool activeSound = false;
         private bool activeGodMode = false;
-        private bool previousGKeyState=false ;
+        private bool previousGKeyState = false;
 
 
         /// <summary>
@@ -206,7 +210,7 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Initialize()
         {
-        
+
             //HUD
             HUD = new HUD(Content, GraphicsDevice);
             HUD.Initialize();
@@ -229,7 +233,7 @@ namespace TGC.MonoGame.TP
             CarModel = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
             CarSimulation = new CarSimulation();
             Simulation = CarSimulation.Init();
-            MainCar = new CarConvexHull(Vector3.Zero, Gravity, Simulation,CarModel);
+            MainCar = new CarConvexHull(Vector3.Zero, Gravity, Simulation, CarModel);
 
 
             //Piso
@@ -273,6 +277,7 @@ namespace TGC.MonoGame.TP
 
             Stars = new PowerUp[]
            {
+               //10 Estrellas para ganar 
                 new Star(new Vector3(0 ,5 ,10)),
                 new Star(new Vector3(-37 ,5 ,28)),
                 new Star(new Vector3(-57 ,5 ,-98)),
@@ -382,18 +387,16 @@ namespace TGC.MonoGame.TP
 
             GameModels = GameModelList.ToArray();
 
+            //Load Misiles y Bullets 
             MissileModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Missile2");
-
             BulletModel = Content.Load<Model>(ContentFolder3D + "PowerUps/Bullet");
-
             MissileEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-
             BulletTexture = ((BasicEffect)BulletModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
-
             MissileTexture = ((BasicEffect)MissileModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
 
             LoadCarModelMenu();
 
+            //Load enemy model
             EnemyModel = Content.Load<Model>(ContentFolder3D + "weapons/Vehicle");
 
             foreach (var mesh in EnemyModel.Meshes)
@@ -513,7 +516,7 @@ namespace TGC.MonoGame.TP
 
         public void mainGameUpdate(GameTime gameTime)
         {
-            
+
             Vector3 forwardLocal = new Vector3(0, 0, -1);
 
             var keyboardState = Keyboard.GetState();
@@ -562,9 +565,11 @@ namespace TGC.MonoGame.TP
             // Actualizar estado del auto
             MainCar.Update(Keyboard.GetState(), gameTime, Simulation);
 
+            //Restart del auto vuelve al inicio
             if (keyboardState.IsKeyDown(Keys.R))
                 MainCar.Restart(new NumericVector3(0f, 10f, 0f), Simulation);
 
+            //Verifico cuando el auto agarre un PowerUp
             Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(MainCar.CarBox, MainCar));
             Array.ForEach(HealthPacks, pack => pack.ActivateIfBounding(MainCar.CarBox, MainCar));
             Array.ForEach(Stars, star => star.ActivateIfBounding(MainCar.CarBox, MainCar));
@@ -573,6 +578,7 @@ namespace TGC.MonoGame.TP
             FollowCamera.Update(gameTime, MainCar.World);
             EnvironmentMapCamera.Position = MainCar.Position + new Vector3(0, 1f, 0);
 
+            //Actualizo BoundingFrustum
             BoundingFrustum.Matrix = FollowCamera.View * FollowCamera.Projection;
 
             var forwardDirection = NumericVector3.Transform(new NumericVector3(0, 0, -1), MainCar.Pose.Orientation);
@@ -602,7 +608,7 @@ namespace TGC.MonoGame.TP
                 Explosion.Play();
             }
 
-            
+
 
             Array.ForEach(GameModels, GameModel =>
             {
@@ -625,9 +631,10 @@ namespace TGC.MonoGame.TP
                 Enemy.Update(MainCar, gameTime, Simulation);
 
             foreach (var Enemy in Enemies)
-                if (MainCar.CarBox.Intersects(Enemy.EnemyOBB))
+                if (MainCar.CarBox.Intersects(Enemy.EnemyOBB) && !activeGodMode)
                     MainCar.Health -= 0.2f;
-
+            
+            //Siempre resto nafta
             MainCar.Oil -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             foreach (var oilBox in Gasolines)
@@ -646,7 +653,8 @@ namespace TGC.MonoGame.TP
                 }
             }
 
-            if (addEnemy && count > 120)
+            //Pegandole a los enemigos aparecen mas 
+            if (addEnemy && count > 110)
             {
                 Enemies.Add(new Enemy(new Vector3(100, 0, 100), EnemyModel, Effect, Simulation, EnemyTexture));
                 addEnemy = false;
@@ -656,9 +664,11 @@ namespace TGC.MonoGame.TP
             MainCar.Oil = MathHelper.Clamp(MainCar.Oil, 0, 100);
             MainCar.Health = MathHelper.Clamp(MainCar.Health, 0, 100);
 
+            //Condiciones de GAME OVER 
             if (MainCar.Oil == 0 || MainCar.Health == 0 || MainCar.Stars == 10 || HUD.Seconds >= 150)
                 gameState = ST_GAME_OVER;
 
+            //Elijo sound dependiendo la condicion 
             if (MainCar.Oil == 0 || MainCar.Health == 0)
                 ChooseSoundEffect = GameOverSoundEffect;
             else if (MainCar.Stars == 10)
@@ -729,21 +739,19 @@ namespace TGC.MonoGame.TP
 
                     // Environment map passes
                     GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-                    // Draw to our cubemap from the robot position
+                    
                     for (var face = CubeMapFace.PositiveX; face <= CubeMapFace.NegativeZ; face++)
                     {
-                        // Set the render target as our cubemap face, we are drawing the scene in this texture
                         GraphicsDevice.SetRenderTarget(EnvironmentMapRenderTarget, face);
                         GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
 
                         SetCubemapCameraForOrientation(face);
                         EnvironmentMapCamera.BuildView();
 
-                        // Draw our scene. Do not draw our tank as it would be occluded by itself 
-                        // (if it has backface culling on)
                         Effect.Parameters["View"].SetValue(EnvironmentMapCamera.View);
                         Effect.Parameters["Projection"].SetValue(EnvironmentMapCamera.Projection);
-                        drawMainScene(gameTime);
+                        
+                        DrawMainScene(gameTime);
                     }
 
                     GraphicsDevice.SetRenderTarget(null);
@@ -753,7 +761,7 @@ namespace TGC.MonoGame.TP
                     EffectNoTextures.Parameters["View"].SetValue(FollowCamera.View);
                     EffectNoTextures.Parameters["Projection"].SetValue(FollowCamera.Projection);
 
-                    drawMainScene(gameTime);
+                    DrawMainScene(gameTime);
 
                     // Draw the car
                     EnvironmentMapEffect.CurrentTechnique = EnvironmentMapEffect.Techniques["EnvironmentMap"];
@@ -800,7 +808,7 @@ namespace TGC.MonoGame.TP
 
         }
 
-        private void drawMainScene(GameTime gameTime)
+        private void DrawMainScene(GameTime gameTime)
         {
             Array.ForEach(GameModels, GameModel => GameModel.Draw(GameModel.Model, GameModel.World, FollowCamera, BoundingFrustum, GameModel.BoundingBox));
             Array.ForEach(PowerUps, PowerUp => PowerUp.Draw(FollowCamera, gameTime, BoundingFrustum, PowerUp.BoundingSphere));
