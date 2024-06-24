@@ -853,7 +853,7 @@ namespace TGC.MonoGame.TP
 
                     if (_elapsedTime >= 1.0)
                     {
-                        _fps = 1000f / _frameCounter;
+                        _fps = _frameCounter;
                         _frameCounter = 0;
                         _elapsedTime -= 1.0;
                     }

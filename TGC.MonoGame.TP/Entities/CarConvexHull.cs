@@ -349,7 +349,7 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[3][mpi];
-            var localWorld = Matrix.CreateRotationY(wheelRotation) * backLeftWorld;
+            var localWorld = backLeftWorld;
             meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
             Effect.Parameters["baseTexture"]?.SetValue(texture);
@@ -362,7 +362,7 @@ public class CarConvexHull
         {
             var meshPart = MainBody.MeshParts[mpi];
             var texture = MeshPartTextures[4][mpi];
-            var localWorld = Matrix.CreateRotationY(wheelRotation) * backRightWorld;
+            var localWorld = backRightWorld;
             meshPart.Effect.Parameters["World"]?.SetValue(localWorld);
             meshPart.Effect.Parameters["InverseTransposeWorld"]?.SetValue(inverseTransposeWorld);
             Effect.Parameters["baseTexture"]?.SetValue(texture);
