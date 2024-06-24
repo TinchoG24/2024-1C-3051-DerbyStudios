@@ -66,8 +66,8 @@ namespace TGC.MonoTP
 
         public void LoadContent()
         {
-            SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "CascadiaCodePL");
-            SpriteFontPlus = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "CascadiaCodePL");
+            SpriteFont = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalic");
+            SpriteFontPlus = Content.Load<SpriteFont>(ContentFolderSpriteFonts + "TechnoRaceItalicPlus");
             HudTexture = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista");
             GameOverTexture = Content.Load<Texture2D>(ContentFolder3D + "HUD/Pista2");
         }

@@ -1148,6 +1148,20 @@
 /processorParam:TextureFormat=Compressed
 /build:SpriteFonts/CascadiaCodePL.spritefont
 
+#begin SpriteFonts/TechnoRaceItalic.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:SpriteFonts/TechnoRaceItalic.spritefont
+
+#begin SpriteFonts/TechnoRaceItalicPlus.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:SpriteFonts/TechnoRaceItalicPlus.spritefont
+
 #begin Textures/FloorNormalMap.png
 /importer:TextureImporter
 /processor:TextureProcessor
