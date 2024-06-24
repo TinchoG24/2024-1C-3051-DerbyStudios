@@ -115,10 +115,8 @@ namespace TGC.MonoGame.TP
         private CarConvexHull MainCar { get; set; }
         private CarSimulation CarSimulation { get; set; }
         private Simulation Simulation { get; set; }
-        public Matrix CarBoxPosition { get; private set; }
         public Model CarModel { get; private set; }
-        public Matrix CarOBBWorld { get; private set; }
-        public OrientedBoundingBox CarBox { get; private set; }
+        
 
 
         //Efectos 
@@ -208,10 +206,7 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Initialize()
         {
-            Vector3 scale;
-            Quaternion rot;
-            Vector3 translation;
-
+        
             //HUD
             HUD = new HUD(Content, GraphicsDevice);
             HUD.Initialize();
@@ -234,16 +229,8 @@ namespace TGC.MonoGame.TP
             CarModel = Content.Load<Model>(ContentFolder3D + "car/RacingCar");
             CarSimulation = new CarSimulation();
             Simulation = CarSimulation.Init();
-            MainCar = new CarConvexHull(Vector3.Zero, Gravity, Simulation);
+            MainCar = new CarConvexHull(Vector3.Zero, Gravity, Simulation,CarModel);
 
-            // OBB del auto principal
-            var temporaryCubeAABB = BoundingVolumesExtensions.CreateAABBFrom(CarModel);
-            temporaryCubeAABB = BoundingVolumesExtensions.Scale(temporaryCubeAABB, 0.017f);
-            CarBox = OrientedBoundingBox.FromAABB(temporaryCubeAABB);
-            CarBox.Center = Vector3.Zero;
-            MainCar.World.Decompose(out scale, out rot, out translation);
-            CarBox.Orientation = Matrix.CreateFromQuaternion(rot);
-            CarBoxPosition = Matrix.CreateTranslation(translation);
 
             //Piso
             FloorQuad = new QuadPrimitive(GraphicsDevice);
@@ -365,7 +352,7 @@ namespace TGC.MonoGame.TP
             WallTexture = Content.Load<Texture2D>(ContentFolderTextures + "stoneTexture");
             WallNormalMap = Content.Load<Texture2D>(ContentFolderTextures + "WallNormalMap");
 
-            MainCar.Load(CarModel, EnvironmentMapEffect);
+            MainCar.Load(EnvironmentMapEffect);
 
             GameModelList = new List<GameModel>();
 
@@ -526,9 +513,7 @@ namespace TGC.MonoGame.TP
 
         public void mainGameUpdate(GameTime gameTime)
         {
-            Vector3 scale;
-            Quaternion rot;
-            Vector3 translation;
+            
             Vector3 forwardLocal = new Vector3(0, 0, -1);
 
             var keyboardState = Keyboard.GetState();
@@ -580,9 +565,9 @@ namespace TGC.MonoGame.TP
             if (keyboardState.IsKeyDown(Keys.R))
                 MainCar.Restart(new NumericVector3(0f, 10f, 0f), Simulation);
 
-            Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(CarBox, MainCar));
-            Array.ForEach(HealthPacks, pack => pack.ActivateIfBounding(CarBox, MainCar));
-            Array.ForEach(Stars, star => star.ActivateIfBounding(CarBox, MainCar));
+            Array.ForEach(PowerUps, PowerUp => PowerUp.ActivateIfBounding(MainCar.CarBox, MainCar));
+            Array.ForEach(HealthPacks, pack => pack.ActivateIfBounding(MainCar.CarBox, MainCar));
+            Array.ForEach(Stars, star => star.ActivateIfBounding(MainCar.CarBox, MainCar));
 
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, MainCar.World);
@@ -617,17 +602,11 @@ namespace TGC.MonoGame.TP
                 Explosion.Play();
             }
 
-            MainCar.World.Decompose(out scale, out rot, out translation);
-            CarBox.Orientation = Matrix.CreateFromQuaternion(rot);
-            CarBoxPosition = Matrix.CreateTranslation(translation);
-            CarBox.Center = translation;
-            CarOBBWorld = Matrix.CreateScale(CarBox.Extents) *
-                 CarBox.Orientation *
-                 CarBoxPosition;
+            
 
             Array.ForEach(GameModels, GameModel =>
             {
-                if (CarBox.Intersects(GameModel.BoundingBox))
+                if (MainCar.CarBox.Intersects(GameModel.BoundingBox))
                     GameModel.Touch = true;
                 else
                     GameModel.Touch = false;
@@ -635,7 +614,7 @@ namespace TGC.MonoGame.TP
             });
             Array.ForEach(PowerUps, PowerUp =>
             {
-                if (CarBox.Intersects(PowerUp.BoundingSphere))
+                if (MainCar.CarBox.Intersects(PowerUp.BoundingSphere))
                     PowerUp.Touch = true;
                 else
                     PowerUp.Touch = false;
@@ -646,13 +625,13 @@ namespace TGC.MonoGame.TP
                 Enemy.Update(MainCar, gameTime, Simulation);
 
             foreach (var Enemy in Enemies)
-                if (CarBox.Intersects(Enemy.EnemyOBB))
+                if (MainCar.CarBox.Intersects(Enemy.EnemyOBB))
                     MainCar.Health -= 0.2f;
 
             MainCar.Oil -= 1 * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             foreach (var oilBox in Gasolines)
-                if (CarBox.Intersects(oilBox.BoundingBox))
+                if (MainCar.CarBox.Intersects(oilBox.BoundingBox))
                     MainCar.Oil += 0.2f;
 
             foreach (var Enemy in Enemies)

@@ -135,5 +135,10 @@ namespace TGC.MonoGame.TP
                 axis = new Vector3(q.X / s, q.Y / s, q.Z / s); // Normalizar el eje
             }
         }
+
+        public static bool NearlyEqual(float a, float b, float epsilon = 0.0001f)
+        {
+            return Math.Abs(a - b) < epsilon;
+        }
     }
 }
