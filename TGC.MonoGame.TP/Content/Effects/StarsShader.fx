@@ -15,24 +15,12 @@ struct VertexShaderInput
 {
     float4 Position : POSITION0;
     float4 Color : COLOR0;
-    float2 TextureCoordinate : TEXCOORD0;
 };
 
 struct VertexShaderOutput
 {
     float4 Position : SV_POSITION;
     float4 Color : COLOR0;
-    float2 TextureCoordinate : TEXCOORD0;
-};
-
-texture ModelTexture;
-sampler2D textureSampler = sampler_state
-{
-    Texture = (ModelTexture);
-    MagFilter = Linear;
-    MinFilter = Linear;
-    AddressU = Clamp;
-    AddressV = Clamp;
 };
 
 float Time;
@@ -72,13 +60,6 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 	// Project position
     output.Position = mul(viewPosition, Projection);
 
-	// Propagate texture coordinates
-    output.TextureCoordinate = input.TextureCoordinate;
-
-	// Animate color
-    input.Color.r = abs(sin(Time * atenuacion));
-    input.Color.g = abs(cos(Time * atenuacion));
-
 	// Propagate color by vertex
     output.Color = input.Color;
 
@@ -88,10 +69,11 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
 	// Get the texture texel textureSampler is the sampler, Texcoord is the interpolated coordinates
-    float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
-    textureColor.a = 1;
-	// Color and texture are combined in this example, 80% the color of the texture and 20% that of the vertex
-    return 0.8 * textureColor + 0.2 * input.Color;
+    // float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
+    // textureColor.a = 1;
+	// // Color and texture are combined in this example, 80% the color of the texture and 20% that of the vertex
+    // return 0.8 * textureColor + 0.2 * input.Color;
+    return float4(1, 1, 0, 1); // Yellow
 }
 
 technique BasicColorDrawing

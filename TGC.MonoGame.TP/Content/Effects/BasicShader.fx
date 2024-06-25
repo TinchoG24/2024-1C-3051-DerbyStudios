@@ -27,6 +27,7 @@ float KSpecular;
 float shininess; 
 float3 lightPosition;
 float3 eyePosition; 
+float3 forwardDir;
 
 
 float Time = 0;
@@ -62,13 +63,12 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 {
 	VertexShaderOutput output = (VertexShaderOutput)0;
 
-
     float4 worldPosition = mul(input.Position, World);
-	output.WorldPosition = worldPosition;
 
     float4 viewPosition = mul(worldPosition, View);	
 	
     output.Position = mul(viewPosition, Projection);
+	output.WorldPosition = worldPosition;
 	output.TextureCoordinate = input.TextureCoordinate;
 	output.Color = input.Color;
 	output.Normal = mul(input.Normal, InverseTransposeWorld);
@@ -82,20 +82,20 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     textureColor.a = 1;
 
     float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
+    float dirCoef = saturate(-3 * dot(lightDirection.xz, forwardDir.xz) + 1);
     float3 viewDirection = normalize(eyePosition - input.WorldPosition.xyz);
     float3 halfVector = normalize(lightDirection + viewDirection);
     
 	
     float NdotL = saturate(dot(input.Normal.xyz, lightDirection));
-    float3 diffuseLight = KDiffuse * diffuseColor * NdotL;
+    float3 diffuseLight = dirCoef * KDiffuse * diffuseColor * NdotL;
 
 	
     float NdotH = dot(input.Normal.xyz, halfVector);
-    float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
+    float3 specularLight = dirCoef * sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
     
  
     float4 finalColor = float4(saturate(ambientColor * KAmbient + diffuseLight) * textureColor.rgb + specularLight, textureColor.a);
-	// return Time *finalColor + textureColor;
 	return finalColor;
 }
 

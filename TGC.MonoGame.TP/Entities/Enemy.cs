@@ -17,6 +17,10 @@ using TGC.MonoGame.TP.Camaras;
 using static System.Formats.Asn1.AsnWriter;
 using System.Transactions;
 using Quaternion = Microsoft.Xna.Framework.Quaternion;
+using System.Reflection;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
+using System.Reflection.Metadata;
+using BepuPhysics.Trees;
 
 namespace TGC.MonoGame.TP.Entities
 {
@@ -30,51 +34,42 @@ namespace TGC.MonoGame.TP.Entities
         public const string ContentFolderTextures = "Textures/";
         public const string ContentFolderSoundEffects = "SoundEffects/";
 
-        public OrientedBoundingBox EnemyOBB { get; set; }
-
-        public Box EnemyBox { get; set; }
-
-        public Matrix EnemyWorld { get; set; }
-
         public Model EnemyModel { get; set; }
-
         public Effect EnemyEffect { get; set; }
-
-        public Texture EnemyTexture { get; set; }
-
-        public BodyHandle EnemyHandle { get; private set; }
-
-        private float time { get; set; }
-
+        public Matrix EnemyWorld { get; set; }
+        public Box EnemyBox { get; set; }
+        public Vector3 Frent { get; private set; }
         public Vector3 Position { get; set; }
-
-        public Vector3 PosDirection { get; private set; }
+        public OrientedBoundingBox EnemyOBB { get; set; }
         public Matrix EnemyOBBPosition { get; private set; }
         public Matrix EnemyOBBWorld { get; private set; }
+        public BodyHandle EnemyHandle { get; private set; }
 
+        public List<Texture2D> EnemyTexture = new List<Texture2D>();
+
+        private float time { get; set; }
         public bool Activated;
-
         private int ArenaWidth = 200;
         private int ArenaHeight = 200;
+        float friction = 0.68f;
 
         private Random _random = new Random();
 
-        public Enemy(Vector3 initialPos)
+        public Enemy(Vector3 initialPos , Model model , Effect effect , Simulation simulation , List<Texture2D> EnemyTextures)
         {
             Position = initialPos;
-        }
+           
+            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(initialPos);
+            
+            Frent = Vector3.Normalize(EnemyWorld.Forward);
 
-        public void LoadContent(ContentManager Content, Simulation simulation)
-        {
-            Vector3 scale;
-            Quaternion rot;
-            Vector3 translation;
+            EnemyEffect = effect;
 
-            EnemyEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EnemyModel = model;
 
-            EnemyModel = Content.Load<Model>(ContentFolder3D + "weapons/Vehicle");
+            EnemyTexture = EnemyTextures;
 
-            EnemyTexture = ((BasicEffect)EnemyModel.Meshes.FirstOrDefault()?.MeshParts.FirstOrDefault()?.Effect)?.Texture;
+            
 
             var temporaryCubeAABB = BoundingVolumesExtensions.CreateAABBFrom(EnemyModel);
             temporaryCubeAABB = BoundingVolumesExtensions.Scale(temporaryCubeAABB, 0.001f);
@@ -92,6 +87,7 @@ namespace TGC.MonoGame.TP.Entities
                   EnemyBox
                 ));
 
+
         }
 
         public void Update(CarConvexHull MainCar, GameTime gameTime, Simulation simulation)
@@ -100,55 +96,37 @@ namespace TGC.MonoGame.TP.Entities
             Quaternion rot;
             Vector3 translation;
 
-            // Asume que tienes un handle de la simulación y de los cuerpos
             var bodyReference = simulation.Bodies.GetBodyReference(EnemyHandle);
             bodyReference.Awake = true;
 
-            // Calcula la dirección hacia la que debe moverse el auto enemigo para alcanzar al objetivo
-            Vector3 direction = Vector3.Normalize(MainCar.Position - Position);
+            NumericVector3 enemyFrent = NumericVector3.Normalize(new NumericVector3(Frent.X, 0, Frent.Z));
+            NumericVector3 directionToMainCar = NumericVector3.Normalize(Utils.ToNumericVector3(MainCar.Position - Position));
 
-            // Fuerza de aceleración
-            float acceleration = 10f;
-            Vector3 force = direction * acceleration;
+            var force = directionToMainCar * 0.2f;
 
-            // Aplica la fuerza al auto enemigo
-            bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, force.Y, force.Z));
+            if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
+            bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, 0, force.Z));
 
-            // Rotación deseada para el auto enemigo
-            Matrix rotationMatrix = Matrix.CreateLookAt(Vector3.Zero, direction, Vector3.Up);
-            Quaternion targetRotation = Quaternion.CreateFromRotationMatrix(rotationMatrix);
+            float diffX = directionToMainCar.X - enemyFrent.X; 
+            float diffZ = directionToMainCar.Z - enemyFrent.Z; 
+            
+            float angle = (float)Math.Atan2(diffZ, diffX); 
 
-            // Calcula el torque necesario para girar el auto enemigo hacia la rotación deseada
-            Quaternion currentRotation = bodyReference.Pose.Orientation;
-            Quaternion rotationDifference = targetRotation * Quaternion.Conjugate(currentRotation);
-            Vector3 angularVelocityChange;
-            float angle;
-            Utils.ToAxisAngle(rotationDifference, out angularVelocityChange, out angle);
+            if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
+            bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle, 0));
 
-            // Asegura que el ángulo sea el más pequeño posible
-            if (angle > MathHelper.Pi)
-                angle -= MathHelper.TwoPi;
+            bodyReference.Pose.Position += Utils.ToNumericVector3(Vector3.Normalize(EnemyWorld.Left)) * 2 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            Position = bodyReference.Pose.Position;
 
-            Vector3 torque = angularVelocityChange * angle * 0.5f; // Constante de ajuste para la velocidad de rotación
-
-            // Aplica el torque al auto enemigo
-            bodyReference.ApplyAngularImpulse(new NumericVector3(torque.X, torque.Y, torque.Z));
-
-            // Simula el frenado si está cerca del objetivo
-            float distanceToTarget = Vector3.Distance(MainCar.Position, Position);
-            if (distanceToTarget < 5f)
-            {
-                // Aplica una fuerza negativa para frenar
-                bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 0.5f);
-            }
-
-            // Actualiza la posición y la orientación del enemigo en el mundo
-            Position = new Vector3(bodyReference.Pose.Position.X, bodyReference.Pose.Position.Y, bodyReference.Pose.Position.Z);
-            currentRotation = bodyReference.Pose.Orientation;
-            EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateFromQuaternion(currentRotation) * Matrix.CreateTranslation(Position);
+            EnemyWorld = Matrix.CreateScale(0.05f) *
+                Matrix.CreateRotationY(-MathHelper.Pi) *
+                Matrix.CreateRotationY(-angle * 2) *
+                Matrix.CreateTranslation(Position);
 
             // Descomponer la matriz del mundo del enemigo para obtener la escala, la rotación y la traslación
-            EnemyWorld.Decompose(out  scale, out  rot, out  translation);
+            EnemyWorld.Decompose(out scale, out rot, out translation);
+
+            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X,rot.Y,rot.Z,rot.W);
 
             // Actualiza la orientación y la posición del OBB (Oriented Bounding Box) del enemigo
             EnemyOBB.Orientation = Matrix.CreateFromQuaternion(rot);
@@ -160,57 +138,39 @@ namespace TGC.MonoGame.TP.Entities
                             EnemyOBB.Orientation *
                             EnemyOBBPosition;
 
+            //float distanceToTarget = Vector3.Distance(MainCar.Position, Position);
+            //if (distanceToTarget < 7f)
+            //{
+            //    // Aplica una fuerza negativa para frenar
+            //    bodyReference.ApplyLinearImpulse(new NumericVector3(-force.X, -force.Y, -force.Z) * 1.5f);
+            //}
 
-        }
-
-        public List<Vector3> GenerateRandomPositions(int count, float y)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, y, z));
-            }
-
-            return positions;
-        }
-
-        public List<Vector3> GenerateRandomPositions(int count)
-        {
-            var positions = new List<Vector3>();
-
-            for (int i = 0; i < count; i++)
-            {
-                int x = _random.Next(-ArenaWidth, ArenaWidth);
-                int z = _random.Next(-ArenaHeight, ArenaHeight);
-                positions.Add(new Vector3(x, 0, z));
-            }
-
-            return positions;
         }
 
         public void Draw(FollowCamera Camera, GameTime gameTime)
         {
-
-            time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
-            EnemyEffect.Parameters["View"].SetValue(Camera.View);
-            EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
-            EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture);
-            EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
-
-            var mesh = EnemyModel.Meshes.FirstOrDefault();
-            if (mesh != null)
+            for (int i = 0; i < EnemyModel.Meshes.Count; i++)
             {
-                foreach (var part in mesh.MeshParts)
-                {
-                    part.Effect = EnemyEffect;
-                }
+                var mesh = EnemyModel.Meshes[i];
+                var texture = EnemyTexture[i];
 
-                mesh.Draw();
+
+                time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+
+                EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
+                EnemyEffect.Parameters["View"].SetValue(Camera.View);
+                EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
+                EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture[i]);
+                EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
+
+                
+                    foreach (var part in mesh.MeshParts)
+                    {
+                        part.Effect = EnemyEffect;
+                    }
+
+                    mesh.Draw();
+                
             }
         }
 
