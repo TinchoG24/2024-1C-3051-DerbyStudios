@@ -18,11 +18,29 @@ Afuera del mundo Windows, vas a necesitar la ayudar de [Wine](https://www.winehq
 
 Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com), con lo cual antes de clonar el repositorio les conviene tenerlo instalado así es automático el pull o si ya lo tienen pueden hacer `git lfs pull`.
 
+## Juego
+
+Objetivo del Juego:
+El objetivo principal en Derby Games es recoger 10 estrellas en menos de 150 segundos, mientras evitas quedarte sin gasolina. Los jugadores deben utilizar su habilidad de conducción y estrategia para maniobrar el vehículo a través del campo de demolición, recoger estrellas y recargar gasolina en las estaciones de servicio. Todo esto, mientras sobreviven a los ataques de enemigos que intentan destruir tu auto.
+
+Mecánicas del Juego:
+
+Estrellas: Debes recoger 10 estrellas dispersas por el campo de juego antes de que se agoten los 150 segundos.
+Gasolina: Mantén tu nivel de gasolina recargándola en las estaciones de servicio. Si te quedas sin gasolina, perderás.
+Enemigos: Los enemigos te quitan vida cuando están cerca de ti. Debes evitarlos o enfrentarlos para sobrevivir.
+Supervivencia: Sobrevive a los ataques de tus enemigos utilizando habilidades y power-ups.
+
+Power-Ups:
+
+Velocidad: Aumenta temporalmente la velocidad de tu vehículo, permitiéndote escapar de enemigos y recoger estrellas más rápido.
+Misiles: Lanza misiles hacia los enemigos para destruirlos y despejar tu camino.
+Ametralladoras: Equipa tu auto con ametralladoras para disparar a los enemigos cercanos y desbloquear nuevos objetivos.
+
 ## Integrantes
 
 Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 ------------     | -----------    |-------------  | -------------|
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |utn.github.io/blob/master/images/trofeotp.png" height="500"> |utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
 
 ## Capturas
 
