@@ -26,11 +26,10 @@ TGC, Tgcito  |  Apellido, Nombre
 
 ## Capturas
 
-![screenshot1](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot2](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot3](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot4](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot5](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/1ccf03f3-d850-485b-9c28-5dbeaafffc59)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/fe8bd366-ad76-4ff7-ab7c-a7f063eeeb8a)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/9b9963e1-e015-4689-8281-f4a065f7416a)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/53824f9c-ee25-4f78-af5d-88f9922708e7)
 
 ## Game Play
 
