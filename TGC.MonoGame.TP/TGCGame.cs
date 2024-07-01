@@ -236,9 +236,9 @@ namespace TGC.MonoGame.TP
             // Apago el backface culling.
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
             // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
-            var rasterizerState = new RasterizerState();
-            rasterizerState.CullMode = CullMode.None;
-            GraphicsDevice.RasterizerState = rasterizerState;
+            //var rasterizerState = new RasterizerState();
+            //rasterizerState.CullMode = CullMode.None;
+            //GraphicsDevice.RasterizerState = rasterizerState;
 
             // Camara para seguir al auto principal
             FollowCamera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
@@ -395,7 +395,7 @@ namespace TGC.MonoGame.TP
             //Load Models posicion fija
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "tgcito-classic/tgcito-classic"), Effect, 0.1f, new Vector3(40f, 6.5f, 10f), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Truck/Caterpillar_Truck"), Effect, 0.01f, new Vector3(10f, 0, 10f), Simulation));
-            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "trees/Tree4"), Effect, 0.02f, new Vector3(35f, 0f, 55f), Simulation));
+            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "trees/Tree4"), Effect, 0.02f, new Vector3(35f, 0f, 55f), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, new Vector3(30, 0, 0), Simulation));
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, new Vector3(50, 10, 50), Simulation));
             Gasoline = new GameModel(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, new Vector3(3, 0, 0), Simulation);
@@ -404,15 +404,15 @@ namespace TGC.MonoGame.TP
             GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "carDBZ/carDBZNew"), Effect, 0.05f, new Vector3(150f, 0, 50f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "car2/car2New"), Effect, 0.01f, new Vector3(100, 0, 20), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/WatercolorScene"), Effect, 0.01f, new Vector3(130, 0, 40), Simulation));
-            //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
+            GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, new Vector3(25, 0, 25), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/House"), Effect, 0.01f, new Vector3(180f, 0, 80f), Simulation));
             //GameModelList.Add(new GameModel(Content.Load<Model>(ContentFolder3D + "Street/model/FencesNew"), Effect, 1f, new Vector3(-50, 0, 50), Simulation));
 
             //Load Models posicion variable
-            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 6, GameModelList, 10f);
-            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation, 15, GameModelList);
-            Gasolines = Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 15, GameModelList);
-            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation, 30, GameModelList);
+            Utils.AddModelRandomPositionWithY(Content.Load<Model>(ContentFolder3D + "Street/model/old_water_tower"), Effect, 0.01f, Simulation, 8, GameModelList, 10f);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Street/model/ElectronicBoxNew"), Effect, 0.01f, Simulation, 18, GameModelList);
+            Gasolines = Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "gasoline/gasoline"), Effect, 0.03f, Simulation, 22, GameModelList);
+            Utils.AddModelRandomPosition(Content.Load<Model>(ContentFolder3D + "Bushes/source/bush1"), Effect, 0.02f, Simulation, 20, GameModelList);
 
             Gasolines.Add(Gasoline);
 
@@ -931,11 +931,11 @@ namespace TGC.MonoGame.TP
 
             }
             foreach (var Enemy in Enemies)
-                Enemy.Draw(FollowCamera, gameTime);
+                Enemy.Draw(FollowCamera, gameTime, BoundingFrustum);
 
             DrawFloor(FloorQuad);
             DrawWalls();
-
+            
 
             #region DrawGizmos
             //Array.ForEach(PowerUps, PowerUp =>

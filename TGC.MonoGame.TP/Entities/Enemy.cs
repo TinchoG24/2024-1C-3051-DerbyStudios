@@ -55,12 +55,12 @@ namespace TGC.MonoGame.TP.Entities
 
         private Random _random = new Random();
 
-        public Enemy(Vector3 initialPos , Model model , Effect effect , Simulation simulation , List<Texture2D> EnemyTextures)
+        public Enemy(Vector3 initialPos, Model model, Effect effect, Simulation simulation, List<Texture2D> EnemyTextures)
         {
             Position = initialPos;
-           
+
             EnemyWorld = Matrix.CreateScale(0.05f) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(initialPos);
-            
+
             Frent = Vector3.Normalize(EnemyWorld.Forward);
 
             EnemyEffect = effect;
@@ -69,7 +69,7 @@ namespace TGC.MonoGame.TP.Entities
 
             EnemyTexture = EnemyTextures;
 
-            
+
 
             var temporaryCubeAABB = BoundingVolumesExtensions.CreateAABBFrom(EnemyModel);
             temporaryCubeAABB = BoundingVolumesExtensions.Scale(temporaryCubeAABB, 0.001f);
@@ -107,10 +107,10 @@ namespace TGC.MonoGame.TP.Entities
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyLinearImpulse(new NumericVector3(force.X, 0, force.Z));
 
-            float diffX = directionToMainCar.X - enemyFrent.X; 
-            float diffZ = directionToMainCar.Z - enemyFrent.Z; 
-            
-            float angle = (float)Math.Atan2(diffZ, diffX); 
+            float diffX = directionToMainCar.X - enemyFrent.X;
+            float diffZ = directionToMainCar.Z - enemyFrent.Z;
+
+            float angle = (float)Math.Atan2(diffZ, diffX);
 
             if (!bodyReference.Awake) bodyReference.SetLocalInertia(bodyReference.LocalInertia);
             bodyReference.ApplyAngularImpulse(new NumericVector3(0, -angle, 0));
@@ -126,7 +126,7 @@ namespace TGC.MonoGame.TP.Entities
             // Descomponer la matriz del mundo del enemigo para obtener la escala, la rotación y la traslación
             EnemyWorld.Decompose(out scale, out rot, out translation);
 
-            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X,rot.Y,rot.Z,rot.W);
+            bodyReference.Pose.Orientation = new System.Numerics.Quaternion(rot.X, rot.Y, rot.Z, rot.W);
 
             // Actualiza la orientación y la posición del OBB (Oriented Bounding Box) del enemigo
             EnemyOBB.Orientation = Matrix.CreateFromQuaternion(rot);
@@ -147,30 +147,34 @@ namespace TGC.MonoGame.TP.Entities
 
         }
 
-        public void Draw(FollowCamera Camera, GameTime gameTime)
+        public void Draw(FollowCamera Camera, GameTime gameTime, BoundingFrustum boundingFrustum)
         {
-            for (int i = 0; i < EnemyModel.Meshes.Count; i++)
+            if (EnemyOBB.Intersects(boundingFrustum))
             {
-                var mesh = EnemyModel.Meshes[i];
-                var texture = EnemyTexture[i];
+
+                for (int i = 0; i < EnemyModel.Meshes.Count; i++)
+                {
+                    var mesh = EnemyModel.Meshes[i];
+                    var texture = EnemyTexture[i];
 
 
-                time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+                    time += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-                EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
-                EnemyEffect.Parameters["View"].SetValue(Camera.View);
-                EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
-                EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture[i]);
-                EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
+                    EnemyEffect.Parameters["World"].SetValue(EnemyWorld);
+                    EnemyEffect.Parameters["View"].SetValue(Camera.View);
+                    EnemyEffect.Parameters["Projection"].SetValue(Camera.Projection);
+                    EnemyEffect.Parameters["ModelTexture"].SetValue(EnemyTexture[i]);
+                    EnemyEffect.Parameters["Time"]?.SetValue(Convert.ToSingle(time));
 
-                
+
                     foreach (var part in mesh.MeshParts)
                     {
                         part.Effect = EnemyEffect;
                     }
 
                     mesh.Draw();
-                
+
+                }
             }
         }
 
