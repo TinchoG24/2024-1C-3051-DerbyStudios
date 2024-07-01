@@ -20,21 +20,22 @@ Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com
 
 ## Juego
 
-Objetivo del Juego:
+**Objetivo del Juego:**
+
 El objetivo principal en Derby Games es recoger 10 estrellas en menos de 150 segundos, mientras evitas quedarte sin gasolina. Los jugadores deben utilizar su habilidad de conducción y estrategia para maniobrar el vehículo a través del campo de demolición, recoger estrellas y recargar gasolina en las estaciones de servicio. Todo esto, mientras sobreviven a los ataques de enemigos que intentan destruir tu auto.
 
-Mecánicas del Juego:
+**Mecánicas del Juego:**
 
-Estrellas: Debes recoger 10 estrellas dispersas por el campo de juego antes de que se agoten los 150 segundos.
-Gasolina: Mantén tu nivel de gasolina recargándola en las estaciones de servicio. Si te quedas sin gasolina, perderás.
-Enemigos: Los enemigos te quitan vida cuando están cerca de ti. Debes evitarlos o enfrentarlos para sobrevivir.
-Supervivencia: Sobrevive a los ataques de tus enemigos utilizando habilidades y power-ups.
+- Estrellas: Debes recoger 10 estrellas dispersas por el campo de juego antes de que se agoten los 150 segundos.
+- Gasolina: Mantén tu nivel de gasolina recargándola en las estaciones de servicio. Si te quedas sin gasolina, perderás.
+- Enemigos: Los enemigos te quitan vida cuando están cerca de ti. Debes evitarlos o enfrentarlos para sobrevivir.
+- Supervivencia: Sobrevive a los ataques de tus enemigos utilizando habilidades y power-ups.
 
-Power-Ups:
+**Power-Ups:**
 
-Velocidad: Aumenta temporalmente la velocidad de tu vehículo, permitiéndote escapar de enemigos y recoger estrellas más rápido.
-Misiles: Lanza misiles hacia los enemigos para destruirlos y despejar tu camino.
-Ametralladoras: Equipa tu auto con ametralladoras para disparar a los enemigos cercanos y desbloquear nuevos objetivos.
+- Velocidad: Aumenta temporalmente la velocidad de tu vehículo, permitiéndote escapar de enemigos y recoger estrellas más rápido.
+- Misiles: Lanza misiles hacia los enemigos para destruirlos y despejar tu camino.
+- Ametralladoras: Equipa tu auto con ametralladoras para disparar a los enemigos cercanos y desbloquear nuevos objetivos.
 
 ## Integrantes
 
