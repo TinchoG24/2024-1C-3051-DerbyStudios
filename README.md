@@ -26,10 +26,12 @@ TGC, Tgcito  |  Apellido, Nombre
 
 ## Capturas
 
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/1ccf03f3-d850-485b-9c28-5dbeaafffc59)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/fe8bd366-ad76-4ff7-ab7c-a7f063eeeb8a)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/9b9963e1-e015-4689-8281-f4a065f7416a)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/53824f9c-ee25-4f78-af5d-88f9922708e7)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/921a0f79-db50-41c5-8819-c61126163c46)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/2f0748f0-c659-49c7-b8ed-9bc2afe700a6)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/cbe35bde-140a-4c31-b97b-6dc2db7b974b)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/4d5b5385-6205-473c-b970-6d8c7f0362d3)
+
+
 
 ## Game Play
 
