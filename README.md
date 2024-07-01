@@ -51,5 +51,4 @@ Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 
 
 ## Game Play
-[
 [![Watch the video](https://i9.ytimg.com/vi_webp/yzoQpn3tYas/mq1.webp?sqp=CMzfi7QG-oaymwEmCMACELQB8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGDsgRCh_MA8=&rs=AOn4CLAUT0RlBJwpR_ALaQerLx6Eu5GsfQ)](https://youtu.be/yzoQpn3tYas)
