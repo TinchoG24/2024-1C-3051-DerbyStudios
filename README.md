@@ -28,9 +28,8 @@ Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/921a0f79-db50-41c5-8819-c61126163c46)
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/2f0748f0-c659-49c7-b8ed-9bc2afe700a6)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/cbe35bde-140a-4c31-b97b-6dc2db7b974b)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/057ed012-dca7-4bbd-b66b-4637a5d7eb15)
-
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/293b3e13-5e06-41bf-aa2f-122b44f01c54)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/d512efa4-5974-4bc8-9f99-62a67ed704f3)
 
 
 ## Game Play
