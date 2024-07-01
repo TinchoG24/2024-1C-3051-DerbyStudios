@@ -22,12 +22,11 @@ Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com
 
 Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 ------------     | -----------    |-------------  | -------------|
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |utn.github.io/blob/master/images/trofeotp.png" height="500"> |utn.github.io/blob/master/images/trofeotp.png" height="500"> |
 
 ## Capturas
 
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/921a0f79-db50-41c5-8819-c61126163c46)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/2f0748f0-c659-49c7-b8ed-9bc2afe700a6)
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/293b3e13-5e06-41bf-aa2f-122b44f01c54)
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/d512efa4-5974-4bc8-9f99-62a67ed704f3)
 
