@@ -20,8 +20,8 @@ Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com
 
 ## Integrantes
 
-TGC, Tgcito  |  Apellido, Nombre
------------- | -------------
+Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
+------------     | -----------    |-------------  | -------------|
 | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
 
 ## Capturas
@@ -29,7 +29,7 @@ TGC, Tgcito  |  Apellido, Nombre
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/921a0f79-db50-41c5-8819-c61126163c46)
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/2f0748f0-c659-49c7-b8ed-9bc2afe700a6)
 ![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/cbe35bde-140a-4c31-b97b-6dc2db7b974b)
-![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/4d5b5385-6205-473c-b970-6d8c7f0362d3)
+![image](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/057ed012-dca7-4bbd-b66b-4637a5d7eb15)
 
 
 
