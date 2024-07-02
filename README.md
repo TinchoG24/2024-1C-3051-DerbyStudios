@@ -43,7 +43,11 @@ El objetivo principal en Derby Games es recoger 10 estrellas en menos de 150 seg
 
 Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 ------------     | -----------    |-------------  | -------------|
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+|<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | 
+<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+<img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/66f911a1-baab-456a-a4e5-82f36ff74618" height="500"> |
+<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+
 
 ## Capturas
 
