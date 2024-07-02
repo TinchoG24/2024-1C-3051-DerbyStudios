@@ -57,4 +57,4 @@ Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 
 
 ## Game Play
-[![Watch the video](https://i9.ytimg.com/vi_webp/yzoQpn3tYas/mq1.webp?sqp=CMzfi7QG-oaymwEmCMACELQB8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGDsgRCh_MA8=&rs=AOn4CLAUT0RlBJwpR_ALaQerLx6Eu5GsfQ)](https://youtu.be/yzoQpn3tYas)
+[![Watch the video](https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/d21be677-4c06-4ba3-8349-2a3005019747)](https://youtu.be/yzoQpn3tYas)
