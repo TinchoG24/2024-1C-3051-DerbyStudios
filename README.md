@@ -43,7 +43,10 @@ El objetivo principal en Derby Games es recoger 10 estrellas en menos de 150 seg
 
 Francisco Veiga  |  Martin Gomez  | Pedro Baccaro | Luis Pulgar  |
 ------------     | -----------    |-------------  | -------------|
-|<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |<img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/66f911a1-baab-456a-a4e5-82f36ff74618" height="100" width ="100"> |<img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+|<img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/205b2fb7-e185-4be4-800d-5e6785f23d4e" height="100" width="100"> | <img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/a4c1696e-5f68-4481-b6b4-36e1af0aec14" height="100" width="100"> |<img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/66f911a1-baab-456a-a4e5-82f36ff74618" height="100" width ="100"> |<img src="https://github.com/TinchoG24/2024-1C-3051-DerbyStudios/assets/129139843/d3e20689-a49a-4024-a807-45e1c1e6080a" height="100" width="100"> |
+
+
+
 
 
 ## Capturas
