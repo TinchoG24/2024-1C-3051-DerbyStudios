@@ -10,6 +10,8 @@
 
 Proyecto Derby Games para los trabajos prácticos de la asignatura electiva [Técnicas de Gráficos por Computadora](http://tgc-utn.github.io/) (TGC) en la carrera de Ingeniería en Sistemas de Información. Universidad Tecnológica Nacional, Facultad Regional Buenos Aires (UTN-FRBA).
 
+[#DerbyGames](https://docs.google.com/presentation/d/1DuPCLgdBRjZ9WNkqYEqnQdnWyzGRcpvuLChjyT-bMBA/edit#slide=id.g24ed99bf1a4_0_71)
+
 ## Configuración del entorno de desarrollo
 
 Los pasos a seguir según su sistema operativo se pueden leer en el siguiente documento [install.md](https://github.com/tgc-utn/tgc-monogame-samples/blob/master/docs/install/install.md).
